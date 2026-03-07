@@ -4,12 +4,29 @@ Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRaz
 
 ## Effects
 
+All effects are procedurally generated — they never repeat the same pattern twice.
+
 | Effect | Description |
 |--------|-------------|
 | **Arc Sweep** | Arcs of light sweep across the keyboard from random directions with variable speed and trailing fade. Multiple arcs can overlap simultaneously. |
 | **Lightning Strike** | Procedural lightning bolts strike from top to bottom with zigzag paths, purple branches, restrikes, and teal surge flickers. Mimics natural thunderstorm rhythm. |
-
-All effects are procedurally generated — they never repeat the same pattern twice.
+| **Binary Cascade** | Matrix-style falling streams of green light with bright white heads and fading trails. Random cyan glints sparkle through the streams. |
+| **Tidal Swell** | Ocean waves roll across the keyboard with crests, foam sparkle, and depth-based color shading. |
+| **Plasma** | Classic demoscene plasma with layered sine waves creating organic flowing color fields. Optional overlay layer for extra complexity. |
+| **Searchlight** | A rotating beam sweeps across a purple background with warm white/yellow highlights. |
+| **Glitch** | Alternates between a quiet baseline and violent burst corruption with row shifts and scanlines. |
+| **Fractal Zoom** | Mandelbrot/Julia set zoom with a purple nebula palette. Continuously zooms into interesting regions. |
+| **Lissajous** | A dot traces Lissajous curves with a fading trail. Frequencies morph over time for endless variation. |
+| **Heat Diffusion** | Random hot spots ignite and heat spreads via discrete Laplacian diffusion with global cooling. Hot iron palette (black → red → orange → yellow → white). |
+| **Metaballs** | Molten lava blobs drift on Lissajous paths, merging and splitting organically. Aspect-ratio-corrected field evaluation with a lava palette. |
+| **Chladni Patterns** | Vibrating plate nodal line visualization. Azure lines on a dark background morph between mode pairs with a gentle breathing pulse. |
+| **Cyclic Cellular Automaton** | 14-state automaton with Moore neighborhood produces self-organizing rainbow spiral waves from random noise. Auto-reseeds on stagnation. |
+| **Magnetic Field Lines** | Iron filings pattern from 4 drifting magnetic poles. Cyan field lines with red/blue pole glows. Topology snaps as poles pass each other. |
+| **Wave Interference** | 2D wave equation with 3 moving point sources. Waves propagate, reflect, and interfere in a diverging blue-black-gold palette. |
+| **Fireflies** | Kuramoto coupled oscillators where each key flashes like a firefly. Coupling oscillates, cycling between synchronization and chaos. |
+| **Crystal Growth** | Diffusion-limited aggregation grows a crystal from the center. Random walkers stick on contact, colored by growth order (blue → red). Resets at 55% fill. |
+| **Reaction-Diffusion** | Gray-Scott model produces organic cell-like patterns that split, pulse, and reform. Bioluminescent teal-cyan palette. |
+| **Physarum** | Slime mold simulation with 150 agents sensing and depositing trails on a high-res buffer. Self-organizing vein-like networks in yellow-green. |
 
 ## Installation
 
@@ -51,6 +68,8 @@ Each effect can also be run directly:
 ```bash
 .venv/bin/python3 effects/arc_sweep.py
 .venv/bin/python3 effects/lightning_strike.py
+.venv/bin/python3 effects/heat_diffusion.py
+# ... any effect in effects/
 ```
 
 ### Hot Reload
@@ -91,10 +110,10 @@ The tray app auto-discovers new effects when you open its menu. Files ending in 
 ├── razer_lighting.py            # System tray app
 ├── device.py                    # OpenRazer device connection (with retry)
 ├── effects/
-│   ├── arc_sweep.py             # Arc Sweep effect
-│   ├── arc_sweep_config.py      # Arc Sweep config (hot-reloadable)
-│   ├── lightning_strike.py      # Lightning Strike effect
-│   └── lightning_strike_config.py
+│   ├── arc_sweep.py             # Each effect is a standalone module
+│   ├── arc_sweep_config.py      # Companion config (hot-reloadable)
+│   ├── ...                      # 19 effects total, each with _config.py
+│   └── physarum.py
 └── .venv/                       # Python virtual environment
 ```
 
