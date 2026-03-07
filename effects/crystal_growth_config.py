@@ -1,8 +1,9 @@
-FPS = 20
+FPS = 12
 
 # DLA parameters
-MAX_WALKERS = 80
-STEPS_PER_FRAME = 30
+MAX_WALKERS = 30
+WALK_STEPS = 40
+MAX_ATTACH_PER_FRAME = 1        # cap new crystal cells per frame for visible growth
 FILL_THRESHOLD = 0.55
 
 # Flash on new attachment

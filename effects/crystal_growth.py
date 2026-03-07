@@ -12,7 +12,6 @@ Edit crystal_growth_config.py while running to tweak on the fly.
 """
 
 import os
-import math
 import random
 import signal
 import sys
@@ -47,22 +46,12 @@ def spawn_walker_edge(rows, cols):
         return [random.randint(0, rows - 1), cols - 1]
 
 
-def has_crystal_neighbor(r, c, crystal, rows, cols):
-    """Check if (r, c) is adjacent to any crystal cell."""
-    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        nr, nc = r + dr, c + dc
-        if 0 <= nr < rows and 0 <= nc < cols and crystal[nr][nc]:
-            return True
-    return False
-
-
 def palette_color(order, total_attached, palette):
     """Map attachment order to a palette color via linear interpolation."""
     if total_attached <= 1:
         return palette[0]
     t = order / max(total_attached - 1, 1)
     t = max(0.0, min(1.0, t))
-    # Scale t to palette segments
     seg = t * (len(palette) - 1)
     idx = int(seg)
     frac = seg - idx
@@ -82,14 +71,13 @@ def run(device, stop_event):
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
     matrix = device.fx.advanced.matrix
+    total_cells = rows * cols
 
     while not stop_event.is_set():
         # Initialize crystal state
         crystal = [[False] * cols for _ in range(rows)]
         attach_order = [[0] * cols for _ in range(rows)]
         flash_remaining = [[0] * cols for _ in range(rows)]
-        total_attached = 0
-        total_cells = rows * cols
 
         # Seed: center cell
         sr, sc = rows // 2, cols // 2
@@ -102,9 +90,10 @@ def run(device, stop_event):
 
         while not stop_event.is_set():
             cfg = load_config()
-            interval = 1.0 / cfg.get("FPS", 20)
-            max_walkers = cfg.get("MAX_WALKERS", 80)
-            steps_per_frame = cfg.get("STEPS_PER_FRAME", 30)
+            interval = 1.0 / cfg.get("FPS", 12)
+            max_walkers = cfg.get("MAX_WALKERS", 30)
+            walk_steps = cfg.get("WALK_STEPS", 40)
+            max_attach = cfg.get("MAX_ATTACH_PER_FRAME", 1)
             fill_threshold = cfg.get("FILL_THRESHOLD", 0.55)
             flash_frames = cfg.get("FLASH_FRAMES", 5)
             palette = cfg.get("PALETTE", [
@@ -116,57 +105,66 @@ def run(device, stop_event):
             ])
             bg = cfg.get("BG_COLOR", (0, 0, 0))
 
-            # Spawn walkers to maintain MAX_WALKERS
+            # Spawn walkers to maintain count
             while len(walkers) < max_walkers:
                 walkers.append(spawn_walker_edge(rows, cols))
 
-            # Perform random walk steps
+            # Walk and attach (cap attachments per frame for visible growth)
             directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-            new_walkers = []
-            for _ in range(steps_per_frame):
-                still_walking = []
+            attached_this_frame = 0
+
+            for _ in range(walk_steps):
+                if attached_this_frame >= max_attach:
+                    break
+                next_walkers = []
                 for w in walkers:
                     dr, dc = random.choice(directions)
                     w[0] += dr
                     w[1] += dc
 
-                    # Out of bounds — respawn at edge
+                    # Out of bounds — respawn
                     if w[0] < 0 or w[0] >= rows or w[1] < 0 or w[1] >= cols:
                         w[:] = spawn_walker_edge(rows, cols)
-                        still_walking.append(w)
+                        next_walkers.append(w)
                         continue
 
-                    # Already on a crystal cell (shouldn't normally happen, re-spawn)
+                    # Landed on crystal — respawn
                     if crystal[w[0]][w[1]]:
                         w[:] = spawn_walker_edge(rows, cols)
-                        still_walking.append(w)
+                        next_walkers.append(w)
                         continue
 
-                    # Check adjacency — stick if neighbor is crystal
-                    if has_crystal_neighbor(w[0], w[1], crystal, rows, cols):
+                    # Check 8-connected adjacency for sticking
+                    stuck = False
+                    if attached_this_frame < max_attach:
+                        for ndr in (-1, 0, 1):
+                            for ndc in (-1, 0, 1):
+                                if ndr == 0 and ndc == 0:
+                                    continue
+                                nr, nc = w[0] + ndr, w[1] + ndc
+                                if 0 <= nr < rows and 0 <= nc < cols and crystal[nr][nc]:
+                                    stuck = True
+                                    break
+                            if stuck:
+                                break
+
+                    if stuck:
                         crystal[w[0]][w[1]] = True
                         attach_order[w[0]][w[1]] = total_attached
                         flash_remaining[w[0]][w[1]] = flash_frames
                         total_attached += 1
-                        # Don't add back to walkers — it stuck
-                        new_walkers.append(spawn_walker_edge(rows, cols))
+                        attached_this_frame += 1
+                        next_walkers.append(spawn_walker_edge(rows, cols))
                     else:
-                        still_walking.append(w)
+                        next_walkers.append(w)
 
-                walkers = still_walking + new_walkers
-                new_walkers = []
-
-            # Check fill threshold
-            if total_attached / total_cells > fill_threshold:
-                # Flash the full crystal briefly, then reset
-                break
+                walkers = next_walkers
 
             # Render frame
             for r in range(rows):
                 for c in range(cols):
                     if crystal[r][c]:
                         if flash_remaining[r][c] > 0:
-                            # White flash fading out
                             f = flash_remaining[r][c] / flash_frames
                             base = palette_color(attach_order[r][c], total_attached, palette)
                             color = (
@@ -183,6 +181,10 @@ def run(device, stop_event):
 
             device.fx.advanced.draw()
             time.sleep(interval)
+
+            # Check fill threshold — reset after rendering
+            if total_attached / total_cells > fill_threshold:
+                break
 
     # Clean up
     for r in range(rows):

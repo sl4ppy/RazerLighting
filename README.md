@@ -4,7 +4,7 @@ Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRaz
 
 ## Effects
 
-All effects are procedurally generated — they never repeat the same pattern twice.
+All effects are procedurally generated — they never repeat the same pattern twice. See [EFFECTS.md](EFFECTS.md) for detailed descriptions and tunable parameters.
 
 | Effect | Description |
 |--------|-------------|
