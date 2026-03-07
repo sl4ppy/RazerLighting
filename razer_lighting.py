@@ -3,6 +3,7 @@
 
 import importlib.util
 import os
+import random
 import signal
 import sys
 import threading
@@ -16,6 +17,9 @@ APP_NAME = "Razer Lighting"
 EFFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "effects")
 AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
 AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, "razer-lighting.desktop")
+STATE_DIR = os.path.expanduser("~/.local/state/razer-lighting")
+STATE_FILE = os.path.join(STATE_DIR, "last-effect")
+RANDOM_CHOICE = "Random"
 
 
 def create_icon_image():
@@ -49,11 +53,28 @@ def discover_effects():
     return effects
 
 
+def save_last_effect(name):
+    """Persist the selected effect name to disk."""
+    os.makedirs(STATE_DIR, exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        f.write(name)
+
+
+def load_last_effect():
+    """Load the last selected effect name from disk."""
+    try:
+        with open(STATE_FILE) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return None
+
+
 class RazerLightingApp:
     def __init__(self):
         self.device = get_device()
         self.effects = discover_effects()
         self.current_effect_name = None
+        self.selected_choice = None  # tracks menu selection (effect name or RANDOM_CHOICE)
         self.effect_thread = None
         self.stop_event = threading.Event()
         self.icon = None
@@ -61,12 +82,17 @@ class RazerLightingApp:
         print(f"Device: {self.device.name}")
         print(f"Effects: {', '.join(self.effects.keys())}")
 
-    def start_effect(self, name):
-        """Stop any running effect and start the named one."""
+    def start_effect(self, name, choice=None):
+        """Stop any running effect and start the named one.
+
+        choice is what the user selected (effect name or RANDOM_CHOICE).
+        """
         self.stop_current()
         if name not in self.effects:
             return
         self.current_effect_name = name
+        self.selected_choice = choice or name
+        save_last_effect(self.selected_choice)
         self.stop_event.clear()
         module = self.effects[name]
         self.effect_thread = threading.Thread(
@@ -75,7 +101,7 @@ class RazerLightingApp:
             daemon=True,
         )
         self.effect_thread.start()
-        print(f"Started: {name}")
+        print(f"Started: {name}" + (" (random)" if self.selected_choice == RANDOM_CHOICE else ""))
         self._update_menu()
 
     def stop_current(self):
@@ -90,9 +116,10 @@ class RazerLightingApp:
         if not self.current_effect_name:
             return
         name = self.current_effect_name
+        choice = self.selected_choice
         # Re-discover to pick up code changes
         self.effects = discover_effects()
-        self.start_effect(name)
+        self.start_effect(name, choice=choice)
         print(f"Reloaded: {name}")
 
     def is_autostart_enabled(self):
@@ -140,6 +167,12 @@ Comment=Custom Razer keyboard lighting effects
             self.start_effect(name)
         return action
 
+    def _start_random(self):
+        """Pick a random effect and start it."""
+        if self.effects:
+            name = random.choice(list(self.effects.keys()))
+            self.start_effect(name, choice=RANDOM_CHOICE)
+
     def _build_menu(self):
         # Rescan effects directory every time the menu is built
         self.effects = discover_effects()
@@ -150,10 +183,13 @@ Comment=Custom Razer keyboard lighting effects
                 pystray.MenuItem(
                     name,
                     self._make_effect_action(name),
-                    checked=lambda item, n=name: self.current_effect_name == n,
+                    checked=lambda item, n=name: self.selected_choice == n,
                     radio=True,
                 )
             )
+
+        def do_random(icon, item):
+            self._start_random()
 
         def do_reload(icon, item):
             self.reload_effect()
@@ -166,6 +202,13 @@ Comment=Custom Razer keyboard lighting effects
 
         return pystray.Menu(
             *effect_items,
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(
+                RANDOM_CHOICE,
+                do_random,
+                checked=lambda item: self.selected_choice == RANDOM_CHOICE,
+                radio=True,
+            ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Reload Effect", do_reload),
             pystray.MenuItem(
@@ -189,8 +232,13 @@ Comment=Custom Razer keyboard lighting effects
             APP_NAME,
             self._build_menu(),
         )
-        # Auto-start the first effect
-        if self.effects:
+        # Restore last selection on startup
+        last = load_last_effect()
+        if last == RANDOM_CHOICE:
+            self._start_random()
+        elif last and last in self.effects:
+            self.start_effect(last)
+        elif self.effects:
             first = next(iter(self.effects))
             self.start_effect(first)
         self.icon.run()
