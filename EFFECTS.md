@@ -10,6 +10,8 @@ All parameters listed below can also be tuned visually using the **Configure...*
 
 **File:** `effects/arc_sweep.py` | **FPS:** 20
 
+![Arc Sweep](screenshots/arc_sweep.gif)
+
 Arcs of light sweep across the keyboard from random directions. Each arc has a bright green center that fades to dark magenta at the edges, followed by a teal trail that dims as it passes. Multiple arcs can overlap, creating layered washes of color. The speed and pause between sweeps are randomized, and per-row column offsets give the wavefront a curved shape.
 
 **Palette:** Bright green center, dark magenta edges, teal trailing fade.
@@ -24,6 +26,8 @@ Arcs of light sweep across the keyboard from random directions. Each arc has a b
 ## Lightning Strike
 
 **File:** `effects/lightning_strike.py` | **FPS:** 15
+
+![Lightning Strike](screenshots/lightning_strike.gif)
 
 Procedural lightning bolts strike from the top of the keyboard to the bottom with realistic zigzag paths. Each bolt has a bright white core, purple branches that fork off at random rows, and a chance of restrikes and teal surge flickers. Multi-bolt storms can fire 2-3 bolts in quick succession. The timing mimics natural thunderstorm rhythm with randomized pauses between events.
 
@@ -42,6 +46,8 @@ Procedural lightning bolts strike from the top of the keyboard to the bottom wit
 
 **File:** `effects/binary_cascade.py` | **FPS:** 18
 
+![Binary Cascade](screenshots/binary_cascade.gif)
+
 Matrix-style falling streams of green light. Each stream has a bright white head followed by a gradient trail from bright green through mid green to a dim green tail. Random cyan glints sparkle through the streams. Streams spawn independently across columns at varying speeds and trail lengths, creating a constant rain of digital characters.
 
 **Palette:** White head, bright/mid/dim green trail, cyan glints, dark green background glow.
@@ -58,6 +64,8 @@ Matrix-style falling streams of green light. Each stream has a bright white head
 ## Tidal Swell
 
 **File:** `effects/tidal_swell.py` | **FPS:** 20
+
+![Tidal Swell](screenshots/tidal_swell.gif)
 
 Ocean waves roll horizontally across the keyboard with realistic depth shading. The wave body transitions from deep ocean blues at the trough to bright green crests, topped with white-green foam and occasional white spray highlights. A secondary wave at a different frequency can overlay the primary wave for more complex motion. A slow vertical swell gives the whole scene a gentle breathing rhythm.
 
@@ -76,6 +84,8 @@ Ocean waves roll horizontally across the keyboard with realistic depth shading. 
 
 **File:** `effects/plasma.py` | **FPS:** 20
 
+![Plasma](screenshots/plasma.gif)
+
 Classic demoscene plasma effect with layered sine waves at different frequencies and angles. Multiple sine functions combine to create organic, flowing color fields that drift across the keyboard. An optional second plasma layer with different parameters blends on top for added visual complexity. The orange-purple palette creates a warm, psychedelic atmosphere.
 
 **Palette:** Deep orange through vivid lavender to deep purple (symmetric gradient).
@@ -91,6 +101,8 @@ Classic demoscene plasma effect with layered sine waves at different frequencies
 ## Searchlight
 
 **File:** `effects/searchlight.py` | **FPS:** 20
+
+![Searchlight](screenshots/searchlight.gif)
 
 A rotating beam of light sweeps across a deep purple background, like a lighthouse or searchlight. The beam has a warm white/yellow core that fades through a warm glow to a green-tinted edge. Subtle brightness flicker adds realism. The beam origin and width are configurable, and the purple ambient background gives the whole keyboard a moody base tone.
 
@@ -108,6 +120,8 @@ A rotating beam of light sweeps across a deep purple background, like a lighthou
 ## Glitch
 
 **File:** `effects/glitch.py` | **FPS:** 15
+
+![Glitch](screenshots/glitch.gif)
 
 Alternates between a quiet dim-green baseline and violent glitch bursts. During bursts, random keys flash with bright green, hot pink, red, white, and cyan. Row-shift corruption displaces entire rows sideways, and bright horizontal scanlines cut across the display. Multi-burst chains can fire in rapid succession. The timing between bursts is randomized, creating a tense, unpredictable rhythm.
 
@@ -127,6 +141,8 @@ Alternates between a quiet dim-green baseline and violent glitch bursts. During 
 
 **File:** `effects/fractal_zoom.py` | **FPS:** 15
 
+![Fractal Zoom](screenshots/fractal_zoom.gif)
+
 Continuously zooms into a Mandelbrot or Julia set fractal, rendered in a purple nebula palette. The view slowly rotates as it zooms, revealing new detail at each level. A breathing pulse modulates brightness for added life. When the zoom reaches its limit, it resets and begins again from a new perspective. Supports switching between Mandelbrot and Julia modes via config.
 
 **Palette:** Near-black purple through deep purple to vivid magenta (symmetric nebula gradient).
@@ -144,6 +160,8 @@ Continuously zooms into a Mandelbrot or Julia set fractal, rendered in a purple 
 ## Lissajous
 
 **File:** `effects/lissajous.py` | **FPS:** 24
+
+![Lissajous](screenshots/lissajous.gif)
 
 A bright dot traces Lissajous curves across the keyboard, leaving a fading green trail behind it. The curve shape morphs over time as frequencies and phase shift gradually, so the pattern never settles into a static loop. A soft glow surrounds the dot head. Periodically, the frequencies jump to new values for fresh shapes.
 
@@ -163,6 +181,8 @@ A bright dot traces Lissajous curves across the keyboard, leaving a fading green
 
 **File:** `effects/heat_diffusion.py` | **FPS:** 20
 
+![Heat Diffusion](screenshots/heat_diffusion.gif)
+
 A thermal simulation where random hot spots ignite across the keyboard. Heat spreads to neighboring cells via discrete Laplacian diffusion while the entire grid slowly cools. The result is mapped to a hot iron palette that transitions from black through red and orange to yellow and white. Hot spots flare up, spread warmth to their surroundings, and gradually fade as cooling wins out — creating a constantly shifting thermal landscape.
 
 **Palette:** Black → dark red → orange → yellow → white (hot iron).
@@ -178,6 +198,8 @@ A thermal simulation where random hot spots ignite across the keyboard. Heat spr
 ## Metaballs
 
 **File:** `effects/metaballs.py` | **FPS:** 24
+
+![Metaballs](screenshots/metaballs.gif)
 
 Molten lava blobs drift on Lissajous paths across the keyboard. Each blob generates a scalar field (radius²/distance²), and where fields overlap the blobs appear to merge organically. The field value is mapped through a lava palette: dark edges glow red, the fringe turns orange, and merged cores blaze yellow-white. Aspect ratio correction accounts for non-square key spacing.
 
@@ -196,6 +218,8 @@ Molten lava blobs drift on Lissajous paths across the keyboard. Each blob genera
 
 **File:** `effects/chladni.py` | **FPS:** 20
 
+![Chladni Patterns](screenshots/chladni.gif)
+
 Visualizes the nodal lines of a vibrating plate — the Chladni figures from acoustics. The formula `a·sin(πnx)·sin(πmy) + b·sin(πmx)·sin(πny)` is evaluated across the keyboard, and brightness peaks at the nodal lines where the amplitude passes through zero. The effect crossfades between different mode pairs (n, m) over time, morphing from one geometric pattern to another. A gentle breathing pulse keeps the pattern alive.
 
 **Palette:** Dark navy background, bright azure/cyan nodal lines.
@@ -211,6 +235,8 @@ Visualizes the nodal lines of a vibrating plate — the Chladni figures from aco
 ## Cyclic Cellular Automaton
 
 **File:** `effects/cyclic_cellular.py` | **FPS:** 12
+
+![Cyclic Cellular Automaton](screenshots/cyclic_cellular.gif)
 
 A grid of cells cycles through 14 states. Each step, a cell advances to the next state if any of its 8 neighbors (Moore neighborhood) already holds that successor state. Starting from random noise, this simple rule produces emergent rotating spirals and traveling waves in a full rainbow palette. The grid wraps toroidally. If the automaton stagnates (no cells change), it automatically re-seeds with fresh random noise.
 
@@ -228,6 +254,8 @@ A grid of cells cycles through 14 states. Each step, a cell advances to the next
 
 **File:** `effects/magnetic_field.py` | **FPS:** 20
 
+![Magnetic Field Lines](screenshots/magnetic_field.gif)
+
 Four magnetic poles (alternating positive and negative charges) drift across the keyboard on Lissajous paths. At each pixel, the total magnetic field vector is computed from all poles, then visualized as an iron filings pattern: brightness follows `|sin(N·angle)| × magnitude`, creating the characteristic line patterns that reveal field topology. Positive poles glow red and negative poles glow blue. When poles pass close to each other, the field topology snaps dramatically.
 
 **Palette:** Dark background, cyan field lines, red positive pole glow, blue negative pole glow.
@@ -244,6 +272,8 @@ Four magnetic poles (alternating positive and negative charges) drift across the
 ## Wave Interference
 
 **File:** `effects/wave_interference.py` | **FPS:** 24
+
+![Wave Interference](screenshots/wave_interference.gif)
 
 A 2D wave equation simulation with 3 moving point sources emitting sine waves. Waves propagate across the grid using Verlet integration, reflecting off boundaries and interfering constructively and destructively. Damping prevents amplitude overflow. Sources drift on Lissajous-like paths, continuously changing the interference pattern. The diverging palette maps negative amplitudes to blue, zero to black, and positive amplitudes to gold.
 
@@ -263,6 +293,8 @@ A 2D wave equation simulation with 3 moving point sources emitting sine waves. W
 
 **File:** `effects/fireflies.py` | **FPS:** 20
 
+![Fireflies](screenshots/fireflies.gif)
+
 Each key is an independent oscillator with its own natural frequency, coupled to its neighbors via the Kuramoto model. The coupling strength oscillates slowly over time, causing the system to cycle between synchronized flashing (all keys fire together) and chaotic independent blinking. Each oscillator's brightness is a sharp flash — `max(0, sin(phase))^sharpness` — mimicking the brief blink of a firefly. The palette transitions from dark green through yellow-green to a bright white flash at peak.
 
 **Palette:** Dark green (dim) → yellow-green (mid) → bright yellow-green → white (flash peak).
@@ -279,6 +311,8 @@ Each key is an independent oscillator with its own natural frequency, coupled to
 ## Crystal Growth
 
 **File:** `effects/crystal_growth.py` | **FPS:** 12
+
+![Crystal Growth](screenshots/crystal_growth.gif)
 
 Diffusion-Limited Aggregation (DLA) grows a crystal from a single seed at the center of the keyboard. Random walkers spawn from the edges and drift randomly; when one touches the crystal (8-connected), it sticks and becomes part of the structure. Growth is capped to one attachment per frame for visible progression. Each cell is colored by its attachment order through a blue-teal-green-amber-red palette, with a brief white flash when it first attaches. When the crystal exceeds 55% fill, it resets and grows anew.
 
@@ -297,6 +331,8 @@ Diffusion-Limited Aggregation (DLA) grows a crystal from a single seed at the ce
 
 **File:** `effects/reaction_diffusion.py` | **FPS:** 20
 
+![Reaction-Diffusion](screenshots/reaction_diffusion.gif)
+
 Two chemicals (A and B) interact via the Gray-Scott reaction-diffusion equations, producing organic cell-like patterns that split, pulse, and reform endlessly. Chemical A fills the grid while B is seeded in small patches. The reaction `A + 2B → 3B` creates autocatalytic growth, balanced by feed and kill rates. A weighted 9-point Laplacian with toroidal wrapping handles diffusion. The mitosis parameter set (f=0.0367, k=0.0649) produces self-replicating spots. Chemical B concentration maps to a bioluminescent teal-cyan palette. If B dies out, the system re-seeds automatically.
 
 **Palette:** Black → dark teal → teal → bright cyan-teal → cyan-white (bioluminescent).
@@ -313,6 +349,8 @@ Two chemicals (A and B) interact via the Gray-Scott reaction-diffusion equations
 ## Physarum
 
 **File:** `effects/physarum.py` | **FPS:** 20
+
+![Physarum](screenshots/physarum.gif)
 
 A slime mold (Physarum polycephalum) simulation. 150 agents wander a high-resolution internal buffer (2x the keyboard resolution), each with three forward-facing sensors. Agents sense the trail map ahead and steer toward higher concentrations, depositing their own trail as they move. The trail map diffuses (3x3 box blur) and decays each frame. This creates self-organizing vein-like transport networks that form, merge, and dissolve organically. The buffer is downsampled to keyboard resolution for display.
 

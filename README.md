@@ -67,7 +67,7 @@ A system tray icon appears with a menu to:
 
 Open **Configure...** from the tray menu to launch the full configuration GUI:
 
-![Config window showing Plasma effect with live keyboard preview](screenshots/config_window_plasma.gif)
+![Config window showing Plasma effect with live keyboard preview](screenshots/plasma.gif)
 
 - **Effect selector** — switch between all 19 effects
 - **Per-effect parameter controls** — sliders, spinboxes, color pickers, palette editors, checkboxes, and list editors auto-generated from each effect's config file
@@ -75,9 +75,9 @@ Open **Configure...** from the tray menu to launch the full configuration GUI:
 - **Tooltips** — hover over any parameter for a description of what it controls
 - **Save / Revert / Defaults** — changes only affect the preview until you click Save; Revert reloads from disk; Reset to Defaults restores original values
 
-![Config window showing Arc Sweep effect](screenshots/config_window_arc_sweep.gif)
+![Config window showing Arc Sweep effect](screenshots/arc_sweep.gif)
 
-![Config window showing Lightning Strike effect](screenshots/config_window_lightning.gif)
+![Config window showing Metaballs effect](screenshots/metaballs.gif)
 
 ### Standalone Effects
 
