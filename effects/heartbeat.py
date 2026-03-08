@@ -61,7 +61,7 @@ def run(device, stop_event):
         bpm_max = cfg.get("BPM_MAX", 90)
         bpm_cycle = cfg.get("BPM_CYCLE", 30.0)
         expand_speed = cfg.get("EXPAND_SPEED", 0.8)
-        ring_width = cfg.get("RING_WIDTH", 0.8)
+        ring_width = cfg.get("RING_WIDTH", 0.5)
         lub_strength = cfg.get("LUB_STRENGTH", 1.0)
         dub_strength = cfg.get("DUB_STRENGTH", 0.7)
         center_row = cfg.get("CENTER_ROW", 2.5)
@@ -101,16 +101,17 @@ def run(device, stop_event):
         # Sum all active pulse rings
         pulse_field = np.zeros((rows, cols), dtype=np.float64)
         alive_rings = []
+        rw_sq = ring_width * ring_width
         for birth_t, strength, exp_spd in pulse_rings:
             age = t_real - birth_t
-            if age > 4.0:  # rings expire after 4 seconds
+            if age > 2.0:  # rings expire after 2 seconds
                 continue
             alive_rings.append((birth_t, strength, exp_spd))
-            expand_radius = age * exp_spd * 6.0
+            expand_radius = age * exp_spd * 4.0
             ring_pos = r_dist - expand_radius
-            # Gaussian ring with decay over time
-            decay = math.exp(-age * 1.2)
-            ring_val = np.exp(-ring_pos * ring_pos / (ring_width * ring_width)) * strength * decay
+            # Sharp Gaussian ring with aggressive decay
+            decay = math.exp(-age * 3.5)
+            ring_val = np.exp(-ring_pos * ring_pos / rw_sq) * strength * decay
             pulse_field += ring_val
         pulse_rings = alive_rings
 
