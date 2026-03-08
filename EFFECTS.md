@@ -1,6 +1,6 @@
 # Effects Guide
 
-Detailed descriptions of all 19 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
+Detailed descriptions of all 26 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
 
 All parameters listed below can also be tuned visually using the **Configure...** window from the system tray menu, which provides sliders, color pickers, and a live keyboard preview.
 
@@ -365,3 +365,156 @@ A slime mold (Physarum polycephalum) simulation. 120 agents wander a high-resolu
 - `DECAY_RATE` — trail decay multiplier per frame
 - `BUFFER_SCALE` — internal buffer resolution multiplier
 - `JITTER` — random angle perturbation per step (prevents convergence)
+
+---
+
+## Raindrop Ripples
+
+**File:** `effects/raindrop.py` | **FPS:** 24
+
+![Raindrop Ripples](screenshots/raindrop.gif)
+
+Raindrops land at random positions across the keyboard, spawning concentric ripple rings that expand outward with amplitude decay. Multiple concurrent ripples interfere constructively and destructively, creating evolving wave patterns on a dark moonlit water surface. Each impact flashes briefly with a bright splash highlight before the rings take over. The diverging palette maps wave troughs to deep midnight blue and crests to bright silver-white.
+
+**Palette:** Deep midnight blue (calm) → dark blue (trough) → teal-blue (mid) → bright cyan-white (crest).
+
+**Key config parameters:**
+- `SPAWN_CHANCE` — probability of a new raindrop per frame
+- `MAX_RIPPLES` — maximum concurrent ripples
+- `EXPAND_SPEED` — ring expansion rate (cells per frame)
+- `RING_FREQ` — tightness of concentric rings
+- `RING_WIDTH` — Gaussian envelope width of each ring
+- `DECAY_RATE` — how fast ripple amplitude dies
+- `ASPECT_RATIO` — keyboard cell aspect correction
+- `SPLASH_COLOR` — bright flash at impact point
+
+---
+
+## Ember Drift
+
+**File:** `effects/ember.py` | **FPS:** 20
+
+![Ember Drift](screenshots/ember.gif)
+
+A particle system where hot embers spawn along the bottom edge of the keyboard and drift upward through lateral wind turbulence. Each particle cools as it rises, shifting from white-hot through orange to dark red before fading out. The bottom two rows shimmer with a smoldering ember bed glow that flickers randomly. Occasional bright sparks launch with double brightness and half lifespan, creating dramatic flare-ups.
+
+**Palette:** Black → dark red → orange-red → orange → amber → yellow-white (hot ember gradient).
+
+**Key config parameters:**
+- `NUM_EMBERS` — maximum active particles
+- `SPAWN_RATE` — new embers per frame (fractional = probability)
+- `RISE_SPEED` — base upward drift speed
+- `WIND_STRENGTH` — lateral wind amplitude
+- `WIND_SPEED` — wind oscillation frequency
+- `SPARK_CHANCE` — probability of a bright spark per frame
+- `MAX_AGE` — frames before an ember dies
+- `BED_GLOW` — bottom row ember bed brightness
+
+---
+
+## Heartbeat Pulse
+
+**File:** `effects/heartbeat.py` | **FPS:** 30
+
+![Heartbeat Pulse](screenshots/heartbeat.gif)
+
+Simulates a beating heart with physiologically-inspired lub-dub cardiac rhythm. Radial pulse rings expand from a center point — the first beat (lub) is strong, followed by a brief pause, then a weaker second beat (dub). A faint vein network computed from Voronoi edges pulses in the background as waves pass through. BPM slowly oscillates between configurable limits for organic variation. Higher FPS (30) ensures smooth pulse animation.
+
+**Palette:** Near-black purple → deep crimson → arterial red → bright red → pink (cardiac gradient).
+
+**Key config parameters:**
+- `BPM` — beats per minute (base rate)
+- `BPM_MIN` / `BPM_MAX` — oscillation range for BPM variation
+- `EXPAND_SPEED` — pulse ring expansion speed
+- `RING_WIDTH` — Gaussian width of each pulse ring
+- `LUB_STRENGTH` / `DUB_STRENGTH` — first and second beat amplitude
+- `CENTER_ROW` / `CENTER_COL` — pulse origin point
+- `VEIN_BRIGHTNESS` — background vein network intensity
+- `VEIN_PULSE` — how much veins brighten when a wave passes
+
+---
+
+## Boid Flock
+
+**File:** `effects/boids.py` | **FPS:** 20
+
+![Boid Flock](screenshots/boids.gif)
+
+Autonomous boid agents follow Craig Reynolds' classic flocking rules — separation, alignment, and cohesion — creating emergent swarm behavior. Each boid deposits a glowing trail that fades over time, revealing the flock's movement patterns. Wall avoidance keeps the flock on-screen. Periodic startle events scatter the flock with random velocity impulses; they then gracefully re-form over the following seconds. The trail palette shifts from dark navy through teal to warm gold at boid positions.
+
+**Palette:** Dark navy (empty) → teal (fading trail) → green → yellow-green → warm gold (fresh trail/boid).
+
+**Key config parameters:**
+- `NUM_BOIDS` — number of flocking agents
+- `VISUAL_RANGE` — neighbor detection radius
+- `SEPARATION_DIST` — minimum comfortable distance
+- `W_SEPARATION` / `W_ALIGNMENT` / `W_COHESION` — flocking force weights
+- `W_WALL` — wall avoidance force weight
+- `TRAIL_DEPOSIT` / `TRAIL_DECAY` — trail brightness and fade rate
+- `STARTLE_INTERVAL_MIN` / `STARTLE_INTERVAL_MAX` — frames between startle events
+- `STARTLE_IMPULSE` — velocity kick magnitude
+
+---
+
+## Aurora Borealis
+
+**File:** `effects/aurora.py` | **FPS:** 20
+
+![Aurora Borealis](screenshots/aurora.gif)
+
+Multi-layer value noise creates shimmering aurora curtains dancing across the keyboard. Three color bands — green, cyan, and magenta — drift at different speeds with Gaussian vertical falloff, blended additively onto a dark night sky. Vertical curtain displacement creates the characteristic folding motion of real auroras. A custom inline 2D value noise with two-octave fractal Brownian motion drives the organic flow. Occasional star twinkles flash briefly in the darker regions.
+
+**Palette:** Dark night sky base with additive green, cyan, and magenta aurora bands. White star twinkles.
+
+**Key config parameters:**
+- `SCROLL_SPEED` — horizontal drift speed
+- `CURTAIN_FREQ` — vertical fold frequency
+- `CURTAIN_SPEED` — fold animation speed
+- `FOLD_FACTOR` — how much rows affect fold phase
+- `NOISE_SCALE` — spatial scale of the noise field
+- `BAND_1_COLOR` / `BAND_2_COLOR` / `BAND_3_COLOR` — aurora layer colors
+- `BAND_1_ROW` / `BAND_2_ROW` / `BAND_3_ROW` — vertical center of each band
+- `STAR_CHANCE` — per-pixel per-frame chance of star twinkle
+
+---
+
+## Nebula Clouds
+
+**File:** `effects/nebula.py` | **FPS:** 18
+
+![Nebula Clouds](screenshots/nebula.gif)
+
+Deep space gas clouds with dual-layer fractal noise creating a sense of depth. A warm nebula layer (purple/magenta/pink) and cool accent clouds (dark blue/teal) drift at different speeds and angles for parallax. Three-octave fBm noise drives the warm layer while two-octave fBm handles the accents. Contrast boosting reveals dramatic cloud structure. Bright pixels within the nebula occasionally flash as newborn stars, adding sparkle to the cosmic scene.
+
+**Palette:** Warm layer: black → deep purple → magenta → pink → lavender. Cool layer: black → dark blue → teal.
+
+**Key config parameters:**
+- `NOISE_SCALE_1` / `NOISE_SCALE_2` — spatial frequency of each layer
+- `DRIFT_SPEED_1` / `DRIFT_SPEED_2` — drift speed (different for parallax)
+- `DRIFT_ANGLE_1` / `DRIFT_ANGLE_2` — drift direction in degrees
+- `ACCENT_STRENGTH` — blend weight of the cool accent layer
+- `STAR_CHANCE` — per-pixel per-frame chance of star flash
+- `STAR_THRESHOLD` — noise value above which stars can appear
+- `PALETTE_WARM` / `PALETTE_COOL` — color stops for each layer
+
+---
+
+## Voronoi Shatter
+
+**File:** `effects/voronoi.py` | **FPS:** 20
+
+![Voronoi Shatter](screenshots/voronoi.gif)
+
+Moving seed points create a dynamic Voronoi diagram rendered as stained-glass cells with neon edge glow. Each cell is colored by its seed's slowly rotating HSV hue with distance-based saturation variation. Cell edges are detected where the nearest and second-nearest seed distances converge, creating bright neon outlines. Seeds drift via Brownian motion with boundary reflection. Periodic shatter events split a random seed into two, creating dramatic new fracture lines before merging back.
+
+**Palette:** Per-cell HSV hues (full spectrum) with configurable neon edge glow (default cyan).
+
+**Key config parameters:**
+- `NUM_SEEDS` — number of Voronoi seed points
+- `SEED_SPEED` — base seed movement speed
+- `HUE_SPEED` — per-frame hue rotation (degrees)
+- `EDGE_WIDTH` — edge detection threshold (lower = thinner edges)
+- `EDGE_COLOR` — neon edge glow color
+- `EDGE_BRIGHTNESS` / `CELL_BRIGHTNESS` — edge and interior intensity
+- `SHATTER_INTERVAL_MIN` / `SHATTER_INTERVAL_MAX` — frames between shatter events
+- `SHATTER_DURATION` — frames the split lasts before merge
