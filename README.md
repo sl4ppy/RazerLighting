@@ -14,10 +14,12 @@ Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRaz
 ## Features
 
 - **19 procedural effects** — from physics simulations to demoscene classics, each infinitely unique
+- **Plain Python scripts** — every effect is a simple `.py` file; easy to read, modify, and create your own
 - **Live configuration GUI** — tune every parameter with sliders, color pickers, and a real-time keyboard preview
 - **Hot-reloadable configs** — edit `_config.py` files while effects run; changes apply instantly
 - **System tray integration** — select effects, randomize, toggle autostart, all from the tray icon
-- **Auto-discovery** — drop a new `.py` file in `effects/` and it appears in the menu
+- **Auto-discovery** — drop a new `.py` file in `effects/` and it appears in the menu automatically
+- **Write your own** — see the **[Creating Effects Guide](CREATING_EFFECTS.md)** to build custom effects
 
 ## Getting Started
 
@@ -55,30 +57,19 @@ Effects can also be run standalone: `.venv/bin/python3 effects/arc_sweep.py`
 
 ## Adding Effects
 
-Drop a `.py` file in `effects/` with this interface:
+Every effect is a plain Python script — no framework, no boilerplate. Drop a `.py` file in `effects/` with an `EFFECT_NAME` string and a `run(device, stop_event)` function, and it appears in the tray menu automatically.
 
 ```python
 EFFECT_NAME = "My Effect"
 
 def run(device, stop_event):
-    rows = device.fx.advanced.rows
-    cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
-
     while not stop_event.is_set():
-        # matrix[row, col] = (r, g, b)
-        # device.fx.advanced.draw()
-        # time.sleep(1.0 / fps)
-        pass
-
-    # Clear on exit
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = (0, 0, 0)
-    device.fx.advanced.draw()
+        # Set colors and draw
+        device.fx.advanced.matrix[0, 0] = (255, 0, 0)
+        device.fx.advanced.draw()
 ```
 
-Add a companion `_config.py` for hot-reloadable parameters. The tray app auto-discovers new effects when the menu is opened.
+See the **[Creating Effects Guide](CREATING_EFFECTS.md)** for a complete walkthrough with examples, shared utilities, config files, and tips.
 
 ## Project Structure
 
