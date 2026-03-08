@@ -9,13 +9,13 @@ BEAM_FALLOFF = 2.0            # how sharply the beam fades at edges (higher = sh
 ORIGIN_X = 0.5
 ORIGIN_Y = 0.5
 
-# Colors
-BG_COLOR = (17, 0, 34)               # deep purple/black ambient
-BEAM_CORE_COLOR = (255, 255, 204)     # warm white/yellow core
-BEAM_MID_COLOR = (200, 220, 100)      # warm glow
-BEAM_EDGE_COLOR = (61, 122, 30)       # green tint at beam edge
-AMBIENT_COLOR = (20, 8, 32)           # subtle purple ambient
+# Colors — warm spotlight on deep indigo
+BG_COLOR = (5, 0, 20)                # deep indigo/black
+BEAM_CORE_COLOR = (255, 240, 220)    # warm white core
+BEAM_MID_COLOR = (255, 180, 60)      # golden mid-glow
+BEAM_EDGE_COLOR = (180, 80, 0)       # amber edge
+AMBIENT_COLOR = (10, 4, 25)          # subtle deep indigo ambient
 
 # Flicker
-FLICKER = True                         # subtle brightness variation
-FLICKER_AMOUNT = 0.08                  # max brightness variation (0-1)
+FLICKER = True                        # subtle brightness variation
+FLICKER_AMOUNT = 0.08                 # max brightness variation (0-1)

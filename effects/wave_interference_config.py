@@ -10,11 +10,14 @@ NUM_SOURCES = 3
 WAVE_FREQ = 0.2
 SOURCE_SPEED = 0.012
 
-# Palette — diverging blue-black-gold
+# Palette — rich diverging sapphire-black-gold
 PALETTE = [
-    (0, 40, 180),
-    (0, 15, 80),
-    (0, 0, 0),
-    (100, 70, 0),
-    (220, 180, 40),
+    (0, 60, 220),
+    (0, 30, 140),
+    (0, 10, 60),
+    (0, 0, 10),
+    (60, 40, 0),
+    (160, 120, 10),
+    (255, 200, 50),
+    (255, 255, 180),
 ]

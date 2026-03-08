@@ -6,11 +6,13 @@ COOLING = 0.008
 IGNITION_CHANCE = 0.08
 IGNITION_HEAT = 1.0
 
-# Palette — hot iron (black → red → orange → yellow → white)
+# Palette — enhanced hot iron with cool blue base
 PALETTE = [
-    (0, 0, 0),
-    (180, 0, 0),
-    (255, 100, 0),
-    (255, 220, 50),
+    (0, 0, 20),
+    (0, 0, 60),
+    (120, 0, 0),
+    (220, 40, 0),
+    (255, 140, 20),
+    (255, 240, 100),
     (255, 255, 255),
 ]

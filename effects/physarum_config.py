@@ -13,12 +13,12 @@ DECAY_RATE = 0.90
 BUFFER_SCALE = 4
 JITTER = 0.15               # random angle jitter per step (radians)
 
-# Palette — yellow-green bioluminescent
+# Palette — electric blue neural network
 PALETTE = [
     (0, 0, 0),
-    (0, 30, 0),
-    (20, 80, 0),
-    (80, 180, 20),
-    (180, 240, 80),
-    (240, 255, 180),
+    (0, 0, 40),
+    (0, 40, 120),
+    (0, 120, 255),
+    (100, 200, 255),
+    (200, 240, 255),
 ]

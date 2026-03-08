@@ -116,13 +116,38 @@ def run(device, stop_event):
         magnitude_factor = np.minimum(1.0, field_mag * field_scale)
         brightness = np.abs(np.sin(num_lines * angle)) * magnitude_factor
 
-        # Base color from field lines: lerp from bg to line_color by brightness
+        # Compute local field polarity bias for aurora coloring
+        # Positive = warm (toward pos_pole_color), Negative = cool (toward neg_pole_color)
+        polarity = np.zeros((rows, cols), dtype=np.float64)
+        for px_pos, py_pos, charge in pole_positions:
+            dx = col_grid - px_pos
+            dy = row_grid - py_pos
+            dist = np.sqrt(dx * dx + dy * dy) + epsilon
+            polarity += charge / (dist + 1.0)
+        # Normalize polarity to [-1, 1]
+        pol_max = max(np.abs(polarity).max(), 0.01)
+        polarity = np.clip(polarity / pol_max, -1.0, 1.0)
+
+        # Blend line color based on polarity: positive -> warm tint, negative -> cool tint
         bg_arr = np.array(bg, dtype=np.float64)
         line_arr = np.array(line_color, dtype=np.float64)
-        # frame shape: (rows, cols, 3)
-        frame = np.zeros((rows, cols, 3), dtype=np.float64)
-        for ch in range(3):
-            frame[:, :, ch] = bg_arr[ch] + brightness * (line_arr[ch] - bg_arr[ch])
+        pos_tint = np.array(pos_pole_color, dtype=np.float64) * 0.4 + line_arr * 0.6
+        neg_tint = np.array(neg_pole_color, dtype=np.float64) * 0.4 + line_arr * 0.6
+
+        # Lerp line color by polarity: neg_tint at -1, line_color at 0, pos_tint at +1
+        pos_blend = np.maximum(polarity, 0.0)[:, :, np.newaxis]
+        neg_blend = np.maximum(-polarity, 0.0)[:, :, np.newaxis]
+        local_line = (
+            line_arr[np.newaxis, np.newaxis, :] * (1.0 - pos_blend - neg_blend)
+            + pos_tint[np.newaxis, np.newaxis, :] * pos_blend
+            + neg_tint[np.newaxis, np.newaxis, :] * neg_blend
+        )
+
+        # Base color from field lines
+        frame = (
+            bg_arr[np.newaxis, np.newaxis, :]
+            + (local_line - bg_arr[np.newaxis, np.newaxis, :]) * brightness[:, :, np.newaxis]
+        )
 
         # Add pole glow (additive, vectorized per pole)
         pos_arr = np.array(pos_pole_color, dtype=np.float64)

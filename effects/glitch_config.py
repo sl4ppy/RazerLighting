@@ -1,7 +1,7 @@
 FPS = 15
 
-# Idle state
-IDLE_COLOR = (0, 51, 0)              # dim green idle baseline
+# Idle state — dark teal baseline
+IDLE_COLOR = (0, 25, 30)
 IDLE_MIN = 1.0                        # min seconds between glitch bursts
 IDLE_MAX = 6.0                        # max seconds between glitch bursts
 
@@ -16,14 +16,14 @@ CORRUPTION_CHANCE = 0.3               # chance of a row-shift corruption per fra
 ROW_SHIFT_MAX = 4                     # max columns a row can shift during corruption
 SCANLINE_CHANCE = 0.2                 # chance of a bright horizontal scanline
 
-# Colors
+# Colors — cyberpunk palette
 GLITCH_COLORS = [
-    (0, 255, 0),              # bright green
-    (204, 0, 68),             # hot pink/red
-    (255, 0, 51),             # red
-    (255, 255, 255),          # white
-    (0, 255, 204),            # cyan
-    (0, 119, 0),              # mid green
+    (255, 0, 100),             # hot magenta
+    (0, 255, 220),             # electric cyan
+    (255, 255, 255),           # white
+    (180, 0, 255),             # neon purple
+    (0, 255, 60),              # acid green
+    (255, 100, 0),             # hot orange
 ]
 
 # Multi-burst: chance of rapid successive bursts

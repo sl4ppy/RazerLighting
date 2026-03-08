@@ -19,11 +19,20 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "glitch_c
 BLACK = (0, 0, 0)
 
 
-def render_idle(matrix, rows, cols, idle_color):
-    """Render the quiet idle state."""
+def render_idle(matrix, rows, cols, idle_color, shimmer=True):
+    """Render the idle state with subtle per-key shimmer."""
     for r in range(rows):
         for c in range(cols):
-            matrix[r, c] = idle_color
+            if shimmer and random.random() < 0.03:
+                # Subtle flicker: randomly brighten or dim a few keys
+                f = random.uniform(0.5, 1.8)
+                matrix[r, c] = (
+                    min(255, int(idle_color[0] * f)),
+                    min(255, int(idle_color[1] * f)),
+                    min(255, int(idle_color[2] * f)),
+                )
+            else:
+                matrix[r, c] = idle_color
 
 
 def render_glitch_frame(matrix, rows, cols, cfg):

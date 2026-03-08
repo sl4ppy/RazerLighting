@@ -9,13 +9,13 @@ FILL_THRESHOLD = 0.55
 # Flash on new attachment
 FLASH_FRAMES = 5
 
-# Palette — growth order (blue -> teal -> green -> amber -> red)
+# Palette — gemstone (amethyst -> sapphire -> emerald -> topaz -> ruby)
 PALETTE = [
-    (30, 60, 200),
-    (0, 160, 160),
-    (0, 180, 60),
-    (200, 160, 0),
-    (220, 40, 20),
+    (120, 0, 220),
+    (0, 80, 255),
+    (0, 220, 120),
+    (255, 200, 0),
+    (255, 30, 60),
 ]
 
 BG_COLOR = (0, 0, 0)

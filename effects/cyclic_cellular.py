@@ -41,8 +41,35 @@ def hsv_to_rgb(h, s, v):
     return (int((r + m) * 255), int((g + m) * 255), int((b + m) * 255))
 
 
-def build_palette(num_states):
-    """Generate a rainbow palette with one colour per state."""
+def interpolate_palette(base_colors, num_states):
+    """Interpolate a base palette to produce exactly num_states colors."""
+    if len(base_colors) == 0:
+        return [(0, 0, 0)] * num_states
+    if len(base_colors) == 1:
+        return [base_colors[0]] * num_states
+    result = []
+    n = len(base_colors) - 1
+    for s in range(num_states):
+        t = s / max(num_states - 1, 1) * n
+        idx = min(int(t), n - 1)
+        frac = t - idx
+        c1, c2 = base_colors[idx], base_colors[min(idx + 1, n)]
+        result.append((
+            int(c1[0] + (c2[0] - c1[0]) * frac),
+            int(c1[1] + (c2[1] - c1[1]) * frac),
+            int(c1[2] + (c2[2] - c1[2]) * frac),
+        ))
+    return result
+
+
+def build_palette(num_states, custom_palette=None):
+    """Generate a palette with one colour per state.
+
+    If custom_palette is provided and non-empty, interpolate it to num_states.
+    Otherwise fall back to HSV rainbow.
+    """
+    if custom_palette:
+        return interpolate_palette(custom_palette, num_states)
     return [hsv_to_rgb(s / num_states * 360, 1.0, 1.0) for s in range(num_states)]
 
 
@@ -74,8 +101,9 @@ def run(device, stop_event):
 
     cfg = load_config(CONFIG_PATH)
     num_states = cfg.get("NUM_STATES", 14)
+    custom_palette = cfg.get("PALETTE", [])
     grid = seed_grid(rows, cols, num_states)
-    palette = build_palette(num_states)
+    palette = build_palette(num_states, custom_palette)
     palette_array = np.array(palette, dtype=np.uint8)
     stagnant_frames = 0
 
@@ -89,10 +117,12 @@ def run(device, stop_event):
         sim_steps = cfg.get("SIM_STEPS_PER_FRAME", 1)
         stagnation_limit = cfg.get("STAGNATION_FRAMES", 60)
 
-        # Rebuild palette / reseed if NUM_STATES changed
-        if num_states_cfg != num_states:
+        new_custom_palette = cfg.get("PALETTE", [])
+        # Rebuild palette / reseed if NUM_STATES or palette changed
+        if num_states_cfg != num_states or new_custom_palette != custom_palette:
             num_states = num_states_cfg
-            palette = build_palette(num_states)
+            custom_palette = new_custom_palette
+            palette = build_palette(num_states, custom_palette)
             palette_array = np.array(palette, dtype=np.uint8)
             grid = seed_grid(rows, cols, num_states)
             stagnant_frames = 0

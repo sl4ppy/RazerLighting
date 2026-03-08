@@ -22,10 +22,10 @@ RESTRIKE_GAP_MIN = 2      # min dark frames before restrike
 RESTRIKE_GAP_MAX = 5      # max dark frames before restrike
 SURGE_CHANCE = 0.5        # chance of surge flicker after restrike
 
-# Colors (matching the original)
+# Colors — vivid electric storm
 BOLT_COLOR = (255, 255, 255)         # white bolt core
-GLOW_COLOR = (10, 26, 42)           # dark navy ambient glow
-GLOW_DIM_COLOR = (6, 14, 24)        # darker navy (sustain frame)
-BRANCH_COLOR = (170, 102, 221)      # purple branch
-BRANCH_DIM_COLOR = (204, 238, 255)  # ice blue (branch fade)
-SURGE_COLOR = (68, 136, 170)        # teal surge pulse
+GLOW_COLOR = (15, 30, 80)           # electric blue ambient glow
+GLOW_DIM_COLOR = (8, 16, 50)        # darker blue (sustain frame)
+BRANCH_COLOR = (160, 80, 255)       # vivid violet branch
+BRANCH_DIM_COLOR = (180, 220, 255)  # pale electric blue (branch fade)
+SURGE_COLOR = (80, 180, 255)        # bright cyan surge pulse

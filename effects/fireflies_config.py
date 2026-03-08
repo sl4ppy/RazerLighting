@@ -9,8 +9,8 @@ COUPLING_SPEED = 0.003
 # Visual
 FLASH_SHARPNESS = 4.0
 
-# Colors
-DIM_COLOR = (0, 15, 0)
-MID_COLOR = (30, 100, 0)
-BRIGHT_COLOR = (150, 220, 50)
-FLASH_COLOR = (255, 255, 200)
+# Colors — golden amber fireflies on deep navy
+DIM_COLOR = (8, 4, 0)
+MID_COLOR = (80, 40, 0)
+BRIGHT_COLOR = (255, 160, 20)
+FLASH_COLOR = (255, 255, 140)

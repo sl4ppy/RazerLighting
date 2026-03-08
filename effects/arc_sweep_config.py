@@ -6,16 +6,16 @@ SPEED_MAX = 4.0
 PAUSE_MIN = 0.5
 PAUSE_MAX = 4.0
 
-CENTER_COLOR = (0, 255, 0)     # #00ff00 bright green
-EDGE_COLOR = (136, 0, 102)     # #880066 dark magenta
+CENTER_COLOR = (100, 180, 255)   # electric blue core
+EDGE_COLOR = (255, 0, 120)       # hot magenta edge
 
 # Trailing fade behind the arc (nearest to farthest)
 TRAIL = [
-    (0, 100, 50),     # deep teal
-    (0, 60, 40),
-    (0, 30, 25),
-    (0, 15, 15),
+    (120, 0, 200),     # vivid violet
+    (60, 0, 140),      # deep violet
+    (25, 0, 80),       # dark violet
+    (8, 0, 30),        # near-black purple
 ]
 
 # Per-row column offset — row 0 leads, creating the arc/curved wavefront
-ROW_OFFSETS = [0.5, 0.0, 0.0, 0.0, 0.0, 0.0]
+ROW_OFFSETS = [1.2, 0.6, 0.0, -0.3, -0.8, -1.5]

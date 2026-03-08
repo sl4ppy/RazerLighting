@@ -43,8 +43,9 @@ def run(device, stop_event):
         morph_speed = cfg.get("MORPH_SPEED", 0.008)
         pulse_speed = cfg.get("PULSE_SPEED", 0.06)
         mode_pairs = cfg.get("MODE_PAIRS", [(2, 3), (3, 5), (4, 3), (5, 2), (1, 4), (3, 4)])
-        line_color = cfg.get("LINE_COLOR", (50, 180, 255))
-        bg_color = cfg.get("BG_COLOR", (0, 5, 15))
+        line_color = cfg.get("LINE_COLOR", (0, 200, 255))
+        antinode_color = cfg.get("ANTINODE_COLOR", (255, 100, 0))
+        bg_color = cfg.get("BG_COLOR", (0, 2, 8))
 
         num_pairs = len(mode_pairs)
         if num_pairs == 0:
@@ -84,15 +85,23 @@ def run(device, stop_event):
         # Clamp
         brightness = np.clip(brightness, 0.0, 1.0)
 
-        # Map brightness to color: bg at 0, line_color at 1
-        # lerp: bg + (line - bg) * brightness
+        # Dual-tone coloring: nodal lines (|v| near 0) get line_color,
+        # anti-nodes (|v| large) get antinode_color, bg in between
         bg_arr = np.array(bg_color, dtype=np.float64)
         line_arr = np.array(line_color, dtype=np.float64)
+        anti_arr = np.array(antinode_color, dtype=np.float64)
+
+        # Anti-node brightness: peaks where |v| is large (inverse of nodal)
+        anti_brightness = np.clip(1.0 - brightness, 0.0, 1.0)
+        # Sharpen the anti-node glow to only show in high-amplitude regions
+        anti_brightness = anti_brightness ** 2.5 * pulse * 0.5
 
         frame_rgb = (
             bg_arr[np.newaxis, np.newaxis, :]
             + (line_arr - bg_arr)[np.newaxis, np.newaxis, :] * brightness[:, :, np.newaxis]
-        ).astype(np.uint8)
+            + (anti_arr - bg_arr)[np.newaxis, np.newaxis, :] * anti_brightness[:, :, np.newaxis]
+        )
+        frame_rgb = np.clip(frame_rgb, 0, 255).astype(np.uint8)
 
         draw_frame(device, frame_rgb)
         t += 1.0

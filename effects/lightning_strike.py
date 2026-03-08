@@ -68,15 +68,24 @@ def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, sto
     if stop_event.is_set():
         return
 
-    # Frame 2: full flash — white bolt, navy glow neighbors, purple branches
+    # Frame 2: full flash — white bolt, glow neighbors, branches, ambient flash
+    ambient = cfg.get("AMBIENT_FLASH_COLOR", (4, 8, 20))
     pixels = {}
+    # Ambient glow across entire keyboard for dramatic flash
+    for r in range(rows):
+        for c in range(cols):
+            pixels[(r, c)] = ambient
+    # Glow around bolt path (2-pixel radius)
     for r, c in enumerate(path):
-        for dc in [-1, 0, 1]:
+        for dc in range(-2, 3):
             nc = c + dc
             if 0 <= nc < cols:
-                pixels[(r, nc)] = glow
-        for r, c in branches:
-            pixels[(r, c)] = branch_color
+                if abs(dc) == 2:
+                    pixels[(r, nc)] = tuple(max(pixels.get((r, nc), (0,0,0))[i], glow[i] // 2) for i in range(3))
+                else:
+                    pixels[(r, nc)] = glow
+    for r, c in branches:
+        pixels[(r, c)] = branch_color
     for r, c in enumerate(path):
         pixels[(r, c)] = bolt_color
     render_pixels(matrix, rows, cols, pixels)

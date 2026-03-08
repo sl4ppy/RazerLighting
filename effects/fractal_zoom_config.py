@@ -13,18 +13,18 @@ JULIA_MODE = False            # True = Julia set, False = Mandelbrot
 JULIA_C_RE = -0.7             # Julia constant (real)
 JULIA_C_IM = 0.27015          # Julia constant (imaginary)
 
-# Color palette — purple/magenta nebula
+# Color palette — cosmic nebula (blue/magenta/gold)
 PALETTE = [
-    (10, 0, 21),              # near-black purple
-    (37, 0, 66),              # deep purple
-    (75, 0, 120),             # purple
-    (140, 0, 200),            # bright purple
-    (180, 50, 255),           # vivid magenta
-    (140, 0, 200),            # bright purple (mirror)
-    (75, 0, 120),             # purple
-    (37, 0, 66),              # deep purple
+    (2, 0, 10),               # void black
+    (0, 20, 80),              # deep blue
+    (80, 0, 160),             # royal purple
+    (255, 0, 120),            # hot pink
+    (255, 200, 50),           # gold highlight
+    (255, 0, 120),            # hot pink (mirror)
+    (80, 0, 160),             # royal purple
+    (0, 20, 80),              # deep blue
 ]
-INSIDE_COLOR = (10, 0, 21)    # color for points inside the set
+INSIDE_COLOR = (2, 0, 10)     # color for points inside the set
 
 # Pulse breathing overlay
 PULSE = True

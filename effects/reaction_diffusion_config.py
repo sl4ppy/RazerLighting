@@ -7,13 +7,14 @@ D_A = 1.0
 D_B = 0.5
 SIM_STEPS = 8
 
-# Palette — bioluminescent (sampled by B concentration)
+# Palette — deep bioluminescent (violet base -> teal -> mint)
 PALETTE = [
-    (0, 0, 0),
-    (0, 20, 25),
-    (0, 80, 80),
+    (0, 0, 5),
+    (10, 0, 40),
+    (0, 60, 100),
     (0, 180, 160),
-    (150, 255, 230),
+    (100, 255, 200),
+    (200, 255, 255),
 ]
 
 # Re-seed threshold (sum of B values)
