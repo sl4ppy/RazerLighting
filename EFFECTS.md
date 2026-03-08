@@ -1,6 +1,6 @@
 # Effects Guide
 
-Detailed descriptions of all 26 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
+Detailed descriptions of all 27 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
 
 All parameters listed below can also be tuned visually using the **Configure...** window from the system tray menu, which provides sliders, color pickers, and a live keyboard preview.
 
@@ -134,6 +134,27 @@ Alternates between a quiet dim-green baseline and violent glitch bursts. During 
 - `CORRUPTION_CHANCE` — probability of row-shift per frame
 - `SCANLINE_CHANCE` — probability of bright scanline per frame
 - `MULTI_BURST_CHANCE` — chance of rapid successive bursts
+
+---
+
+## Corrupt
+
+**File:** `effects/corrupt.py` | **FPS:** 15
+
+![Corrupt](screenshots/corrupt.gif)
+
+Localized corruption zones erupt across an otherwise calm keyboard, like bad memory sectors on a failing display. Small rectangular patches of digital noise, row-shifts, scanlines, and solid color blocks spawn at random positions and live for a few frames before fading out. Each patch style has distinct character — noise scatters random cyberpunk-colored pixels, shift displaces rows sideways, scanlines draw bright horizontal streaks, and block fills a stuck region with a single glitch color. Patches fade in and out smoothly over their lifetime. The rest of the keyboard stays dark teal with subtle random shimmer.
+
+**Palette:** Dark teal idle baseline with cyberpunk corruption bursts: hot magenta, electric cyan, white, neon purple, acid green, hot orange.
+
+**Key config parameters:**
+- `IDLE_COLOR` — baseline keyboard color between corruption events
+- `SPAWN_CHANCE` — probability of spawning a new patch per frame
+- `MAX_PATCHES` — maximum simultaneous corruption zones
+- `PATCH_WIDTH_MIN` / `PATCH_WIDTH_MAX` — patch width range in columns
+- `PATCH_HEIGHT_MIN` / `PATCH_HEIGHT_MAX` — patch height range in rows
+- `PATCH_LIFE_MIN` / `PATCH_LIFE_MAX` — patch lifetime in frames
+- `GLITCH_COLORS` — list of RGB colors used for corruption pixels
 
 ---
 

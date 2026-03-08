@@ -1,6 +1,6 @@
 # Razer Lighting
 
-Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRazer](https://openrazer.github.io/). A system tray app with **26 procedural effects** that never repeat — no Polychromatic needed.
+Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRazer](https://openrazer.github.io/). A system tray app with **27 procedural effects** that never repeat — no Polychromatic needed.
 
 ![Plasma effect](screenshots/plasma.gif)
 
@@ -9,11 +9,11 @@ Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRaz
   <img src="screenshots/arc_sweep.gif" width="49%" />
 </p>
 
-> Every effect is procedurally generated and runs indefinitely. See all 26 with animated previews in the **[Effects Guide](EFFECTS.md)**.
+> Every effect is procedurally generated and runs indefinitely. See all 27 with animated previews in the **[Effects Guide](EFFECTS.md)**.
 
 ## Features
 
-- **26 procedural effects** — from physics simulations to demoscene classics, each infinitely unique
+- **27 procedural effects** — from physics simulations to demoscene classics, each infinitely unique
 - **Plain Python scripts** — every effect is a simple `.py` file; easy to read, modify, and create your own
 - **Live configuration GUI** — tune every parameter with sliders, color pickers, and a real-time keyboard preview
 - **Hot-reloadable configs** — edit `_config.py` files while effects run; changes apply instantly
@@ -47,7 +47,7 @@ Open **Configure...** from the tray menu to launch the configuration window:
 
 ![Configuration window](screenshots/wave_interference.gif)
 
-- **Effect selector** — switch between all 26 effects from the dropdown
+- **Effect selector** — switch between all 27 effects from the dropdown
 - **Auto-generated controls** — sliders, spinboxes, color pickers, palette editors, and checkboxes inferred from each effect's config
 - **Live keyboard preview** — realistic Razer Blade layout renders the effect in real time as you tweak
 - **Tooltips** — hover over any parameter for a description of what it does
@@ -80,7 +80,7 @@ config_parser.py             AST-based config file parsing & writing
 virtual_device.py            Virtual device for preview rendering
 device.py                    OpenRazer device connection with retry
 effects/
-  ├── arc_sweep.py           Effect module (26 total)
+  ├── arc_sweep.py           Effect module (27 total)
   ├── arc_sweep_config.py    Hot-reloadable config
   └── ...
 ```
