@@ -57,9 +57,25 @@ The `--system-site-packages` flag is required so the venv can access the system-
 
 A system tray icon appears with a menu to:
 - **Select an effect** from all discovered effects
+- **Random** — pick a random effect (persisted across restarts)
 - **Reload Effect** — re-import the current effect module from disk
+- **Configure...** — open the graphical configuration window
 - **Start on Login** — toggle XDG autostart
 - **Quit** — stop the effect, clear the keyboard, and exit
+
+### Configuration Window
+
+Open **Configure...** from the tray menu to launch the full configuration GUI:
+
+![Config window showing Plasma effect with live keyboard preview](screenshots/config_window_plasma.png)
+
+- **Effect selector** — switch between all 19 effects
+- **Per-effect parameter controls** — sliders, spinboxes, color pickers, palette editors, checkboxes, and list editors auto-generated from each effect's config file
+- **Live keyboard visualizer** — realistic Razer Blade keyboard layout renders the effect in real time as you adjust parameters
+- **Tooltips** — hover over any parameter for a description of what it controls
+- **Save / Revert / Defaults** — changes only affect the preview until you click Save; Revert reloads from disk; Reset to Defaults restores original values
+
+![Config window showing Arc Sweep parameters](screenshots/config_window_arc_sweep.png)
 
 ### Standalone Effects
 
@@ -108,12 +124,16 @@ The tray app auto-discovers new effects when you open its menu. Files ending in 
 
 ```
 ├── razer_lighting.py            # System tray app
+├── config_window.py             # PyQt5 configuration GUI with live preview
+├── config_parser.py             # AST-based config file parsing & writing
+├── virtual_device.py            # Virtual device for preview rendering
 ├── device.py                    # OpenRazer device connection (with retry)
 ├── effects/
 │   ├── arc_sweep.py             # Each effect is a standalone module
 │   ├── arc_sweep_config.py      # Companion config (hot-reloadable)
 │   ├── ...                      # 19 effects total, each with _config.py
 │   └── physarum.py
+├── screenshots/                 # Documentation screenshots
 └── .venv/                       # Python virtual environment
 ```
 

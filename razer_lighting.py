@@ -5,6 +5,7 @@ import importlib.util
 import os
 import random
 import signal
+import subprocess
 import sys
 import threading
 
@@ -111,6 +112,12 @@ class RazerLightingApp:
             self.effect_thread.join(timeout=3)
         self.effect_thread = None
 
+    def open_config_window(self):
+        """Open the configuration window as a separate process."""
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config_window.py")
+        effect = self.current_effect_name or ""
+        subprocess.Popen([sys.executable, script, effect])
+
     def reload_effect(self):
         """Reload the current effect module from disk and restart it."""
         if not self.current_effect_name:
@@ -194,6 +201,9 @@ Comment=Custom Razer keyboard lighting effects
         def do_reload(icon, item):
             self.reload_effect()
 
+        def do_configure(icon, item):
+            self.open_config_window()
+
         def do_toggle_autostart(icon, item):
             self.toggle_autostart()
 
@@ -211,6 +221,7 @@ Comment=Custom Razer keyboard lighting effects
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Reload Effect", do_reload),
+            pystray.MenuItem("Configure...", do_configure),
             pystray.MenuItem(
                 "Start on Login",
                 do_toggle_autostart,

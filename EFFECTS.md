@@ -2,6 +2,8 @@
 
 Detailed descriptions of all 19 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
 
+All parameters listed below can also be tuned visually using the **Configure...** window from the system tray menu, which provides sliders, color pickers, and a live keyboard preview.
+
 ---
 
 ## Arc Sweep
