@@ -238,9 +238,9 @@ Visualizes the nodal lines of a vibrating plate — the Chladni figures from aco
 
 ![Cyclic Cellular Automaton](screenshots/cyclic_cellular.gif)
 
-A grid of cells cycles through 14 states. Each step, a cell advances to the next state if any of its 8 neighbors (Moore neighborhood) already holds that successor state. Starting from random noise, this simple rule produces emergent rotating spirals and traveling waves in a full rainbow palette. The grid wraps toroidally. If the automaton stagnates (no cells change), it automatically re-seeds with fresh random noise.
+A grid of cells cycles through 8 states. Each step, a cell advances to the next state if any of its 8 neighbors (Moore neighborhood) already holds that successor state. Starting from random noise, this simple rule produces emergent rotating spirals and traveling waves in a full rainbow palette. The grid wraps toroidally. If the automaton stagnates (no cells change), it automatically re-seeds with fresh random noise.
 
-**Palette:** 14-color rainbow generated from HSV (one hue per state, evenly spaced).
+**Palette:** 8-color rainbow generated from HSV (one hue per state, evenly spaced).
 
 **Key config parameters:**
 - `NUM_STATES` — number of states in the cycle (changes palette size)
@@ -275,7 +275,7 @@ Four magnetic poles (alternating positive and negative charges) drift across the
 
 ![Wave Interference](screenshots/wave_interference.gif)
 
-A 2D wave equation simulation with 3 moving point sources emitting sine waves. Waves propagate across the grid using Verlet integration, reflecting off boundaries and interfering constructively and destructively. Damping prevents amplitude overflow. Sources drift on Lissajous-like paths, continuously changing the interference pattern. The diverging palette maps negative amplitudes to blue, zero to black, and positive amplitudes to gold.
+A 2D wave equation simulation with 3 moving point sources emitting sine waves. Waves propagate across the grid using Verlet integration with toroidal wrapping, interfering constructively and destructively as they wrap around. Damping prevents amplitude overflow. Sources inject broad wavefronts and drift on Lissajous-like paths, continuously changing the interference pattern. The diverging palette maps negative amplitudes to blue, zero to black, and positive amplitudes to gold.
 
 **Palette:** Blue (negative) → black (zero) → gold (positive), diverging.
 
@@ -352,7 +352,7 @@ Two chemicals (A and B) interact via the Gray-Scott reaction-diffusion equations
 
 ![Physarum](screenshots/physarum.gif)
 
-A slime mold (Physarum polycephalum) simulation. 150 agents wander a high-resolution internal buffer (2x the keyboard resolution), each with three forward-facing sensors. Agents sense the trail map ahead and steer toward higher concentrations, depositing their own trail as they move. The trail map diffuses (3x3 box blur) and decays each frame. This creates self-organizing vein-like transport networks that form, merge, and dissolve organically. The buffer is downsampled to keyboard resolution for display.
+A slime mold (Physarum polycephalum) simulation. 120 agents wander a high-resolution internal buffer (4x the keyboard resolution), each with three forward-facing sensors. Agents sense the trail map ahead and steer toward higher concentrations, depositing their own trail as they move. A small random angle jitter each step prevents permanent convergence into a single blob. The trail map diffuses (3x3 box blur) and decays each frame. Sqrt normalization compresses dynamic range to reveal subtle trail networks. The buffer is downsampled to keyboard resolution for display.
 
 **Palette:** Black → dark green → olive-green → bright yellow-green → bright yellow → pale yellow (bioluminescent).
 
@@ -364,3 +364,4 @@ A slime mold (Physarum polycephalum) simulation. 150 agents wander a high-resolu
 - `DEPOSIT_AMOUNT` — trail deposited per step
 - `DECAY_RATE` — trail decay multiplier per frame
 - `BUFFER_SCALE` — internal buffer resolution multiplier
+- `JITTER` — random angle perturbation per step (prevents convergence)

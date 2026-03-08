@@ -1,7 +1,7 @@
 FPS = 12
 
 # Automaton rules
-NUM_STATES = 14
+NUM_STATES = 8
 THRESHOLD = 1
 SIM_STEPS_PER_FRAME = 1
 

@@ -12,33 +12,12 @@ Edit lissajous_config.py while running to tweak on the fly.
 import math
 import os
 import random
-import signal
-import sys
-import threading
 import time
+
+from effects.common import load_config, lerp_color, clear_keyboard, frame_sleep, standalone_main
 
 EFFECT_NAME = "Lissajous"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lissajous_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
-def lerp_color(a, b, t):
-    t = max(0.0, min(1.0, t))
-    return (
-        int(a[0] + (b[0] - a[0]) * t),
-        int(a[1] + (b[1] - a[1]) * t),
-        int(a[2] + (b[2] - a[2]) * t),
-    )
 
 
 def run(device, stop_event):
@@ -60,8 +39,10 @@ def run(device, stop_event):
         (7, 4), (3, 7), (4, 7),
     ]
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 24)
         cfg_freq_x = cfg.get("FREQ_X", 3.0)
         cfg_freq_y = cfg.get("FREQ_Y", 2.0)
@@ -148,30 +129,15 @@ def run(device, stop_event):
 
         t += anim_speed
         phase += phase_speed
-        time.sleep(interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+        next_frame = frame_sleep(next_frame, interval)
+
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - lissajous")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

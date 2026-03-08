@@ -8,28 +8,16 @@ Edit arc_sweep_config.py while running to tweak on the fly.
 import math
 import os
 import random
-import signal
-import sys
 import time
-import threading
 
-BLACK = (0, 0, 0)
+from effects.common import load_config, clear_keyboard, frame_sleep, standalone_main
+
 EFFECT_NAME = "Arc Sweep"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arc_sweep_config.py")
 
 
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
 def build_trail(full_trail, speed, speed_min, speed_max):
-    """Scale trail length by speed — faster = longer trail."""
+    """Scale trail length by speed -- faster = longer trail."""
     if not full_trail:
         return []
     speed_t = (speed - speed_min) / (speed_max - speed_min) if speed_max > speed_min else 1.0
@@ -80,26 +68,20 @@ def spawn_arc(cfg, rows, cols):
     }
 
 
-def clear_keyboard(device):
-    rows = device.fx.advanced.rows
-    cols = device.fx.advanced.cols
-    for r in range(rows):
-        for c in range(cols):
-            device.fx.advanced.matrix[r, c] = BLACK
-    device.fx.advanced.draw()
-
-
 def run(device, stop_event):
     """Run the arc sweep effect. Returns when stop_event is set."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
     matrix = device.fx.advanced.matrix
+    BLACK = (0, 0, 0)
 
     arcs = []
     next_spawn = time.monotonic()
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 20)
         now = time.monotonic()
 
@@ -146,26 +128,14 @@ def run(device, stop_event):
             arc["pos"] += arc["speed"]
         arcs = [a for a in arcs if a["pos"] < a["p_max"]]
 
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
     clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - arc sweep")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

@@ -118,6 +118,11 @@ class RazerLightingApp:
         effect = self.current_effect_name or ""
         subprocess.Popen([sys.executable, script, effect])
 
+    def open_about(self):
+        """Open the about dialog as a separate process."""
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "about_window.py")
+        subprocess.Popen([sys.executable, script])
+
     def reload_effect(self):
         """Reload the current effect module from disk and restart it."""
         if not self.current_effect_name:
@@ -207,6 +212,9 @@ Comment=Custom Razer keyboard lighting effects
         def do_toggle_autostart(icon, item):
             self.toggle_autostart()
 
+        def do_about(icon, item):
+            self.open_about()
+
         def do_quit(icon, item):
             self.quit()
 
@@ -228,6 +236,7 @@ Comment=Custom Razer keyboard lighting effects
                 checked=lambda item: self.is_autostart_enabled(),
             ),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem("About...", do_about),
             pystray.MenuItem("Quit", do_quit),
         )
 

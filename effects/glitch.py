@@ -10,24 +10,13 @@ Edit glitch_config.py while running to tweak on the fly.
 
 import os
 import random
-import signal
-import sys
-import threading
 import time
+
+from effects.common import load_config, clear_keyboard, wait_interruptible, standalone_main
 
 EFFECT_NAME = "Glitch"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "glitch_config.py")
 BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
 
 
 def render_idle(matrix, rows, cols, idle_color):
@@ -109,13 +98,6 @@ def render_glitch_frame(matrix, rows, cols, cfg):
             matrix[r, c] = frame[r][c]
 
 
-def wait_interruptible(seconds, stop_event):
-    end = time.monotonic() + seconds
-    while time.monotonic() < end and not stop_event.is_set():
-        time.sleep(min(0.05, end - time.monotonic()))
-    return not stop_event.is_set()
-
-
 def run(device, stop_event):
     """Run the glitch effect."""
     rows = device.fx.advanced.rows
@@ -123,7 +105,7 @@ def run(device, stop_event):
     matrix = device.fx.advanced.matrix
 
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 15)
         idle_color = cfg.get("IDLE_COLOR", (0, 51, 0))
 
@@ -170,27 +152,12 @@ def run(device, stop_event):
         device.fx.advanced.draw()
 
     # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - glitch")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

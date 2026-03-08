@@ -13,53 +13,27 @@ Edit metaballs_config.py while running to tweak on the fly.
 import math
 import os
 import random
-import signal
-import sys
-import threading
 import time
+
+import numpy as np
+
+from effects.common import (
+    load_config, draw_frame, clear_keyboard, frame_sleep,
+    build_palette_lut, palette_lookup, make_coordinate_grids,
+    standalone_main,
+)
 
 EFFECT_NAME = "Metaballs"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "metaballs_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
-def lerp_color(a, b, t):
-    t = max(0.0, min(1.0, t))
-    return (
-        int(a[0] + (b[0] - a[0]) * t),
-        int(a[1] + (b[1] - a[1]) * t),
-        int(a[2] + (b[2] - a[2]) * t),
-    )
-
-
-def sample_palette(palette, t):
-    """Sample a color from the palette at position t (0.0 to 1.0)."""
-    if not palette:
-        return BLACK
-    t = max(0.0, min(1.0, t))
-    n = len(palette) - 1
-    idx = t * n
-    lo = int(idx)
-    hi = min(lo + 1, n)
-    frac = idx - lo
-    return lerp_color(palette[lo], palette[hi], frac)
 
 
 def run(device, stop_event):
     """Run the metaballs effect."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
+
+    # Coordinate grids: row_grid(rows, cols), col_grid(rows, cols)
+    row_grid, col_grid = make_coordinate_grids(rows, cols)
 
     t = 0.0
 
@@ -74,8 +48,10 @@ def run(device, stop_event):
             "phase_y": rng.uniform(0, 2 * math.pi),
         })
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 24)
         num_blobs = cfg.get("NUM_BLOBS", 4)
         blob_radius = cfg.get("BLOB_RADIUS", 1.5)
@@ -87,71 +63,44 @@ def run(device, stop_event):
             (255, 100, 0), (255, 200, 50), (255, 255, 200),
         ])
 
+        lut = build_palette_lut(palette)
+
         # Clamp to available blobs
         num_blobs = min(num_blobs, len(blobs))
 
-        # Compute blob positions via Lissajous paths
-        blob_positions = []
+        r_sq = blob_radius * blob_radius
+
+        # Accumulate field across all blobs (vectorized over the grid)
+        field = np.zeros((rows, cols), dtype=np.float64)
         for i in range(num_blobs):
             b = blobs[i]
             bx = (math.sin(b["freq_x"] * t + b["phase_x"]) + 1.0) / 2.0 * (cols - 1)
             by = (math.sin(b["freq_y"] * t + b["phase_y"]) + 1.0) / 2.0 * (rows - 1)
-            blob_positions.append((bx, by))
+            dx = (col_grid - bx) / aspect
+            dy = row_grid - by
+            dist_sq = dx * dx + dy * dy
+            dist_sq = np.maximum(dist_sq, 0.001)
+            field += r_sq / dist_sq
 
-        r_sq = blob_radius * blob_radius
+        # Map field to palette: normalize then clamp
+        norm = field / threshold
+        palette_t = np.minimum(norm * 0.5, 1.0)
+        # Where field < 0.01, force to black (palette_t = 0 maps to black anyway
+        # since palette starts at black, but enforce for safety)
+        palette_t = np.where(field < 0.01, 0.0, palette_t)
 
-        # Render frame
-        for r in range(rows):
-            for c in range(cols):
-                field = 0.0
-                for bx, by in blob_positions:
-                    dx = (c - bx) / aspect
-                    dy = r - by
-                    dist_sq = dx * dx + dy * dy
-                    if dist_sq < 0.001:
-                        dist_sq = 0.001
-                    field += r_sq / dist_sq
-
-                # Map field to palette
-                if field < 0.01:
-                    color = BLACK
-                else:
-                    # Normalize: field/threshold gives 1.0 at the surface
-                    # Map so that threshold maps to ~0.5 in palette, above goes brighter
-                    norm = field / threshold
-                    # Clamp palette lookup
-                    palette_t = min(1.0, norm * 0.5)
-                    color = sample_palette(palette, palette_t)
-
-                matrix[r, c] = color
-
-        device.fx.advanced.draw()
+        frame_rgb = palette_lookup(lut, palette_t)
+        draw_frame(device, frame_rgb)
 
         t += speed
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - metaballs")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

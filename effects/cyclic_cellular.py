@@ -9,27 +9,15 @@ travelling waves across the keyboard.
 Edit cyclic_cellular_config.py while running to tweak on the fly.
 """
 
-import math
 import os
-import random
-import signal
-import sys
-import threading
 import time
+
+import numpy as np
+
+from effects.common import load_config, draw_frame, clear_keyboard, frame_sleep, standalone_main
 
 EFFECT_NAME = "Cyclic Cellular Automaton"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cyclic_cellular_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
 
 
 def hsv_to_rgb(h, s, v):
@@ -60,31 +48,22 @@ def build_palette(num_states):
 
 def seed_grid(rows, cols, num_states):
     """Create a randomly initialised grid."""
-    return [[random.randint(0, num_states - 1) for _ in range(cols)] for _ in range(rows)]
+    return np.random.randint(0, num_states, (rows, cols))
 
 
 def step_grid(grid, rows, cols, num_states, threshold):
     """Advance the automaton by one step. Returns (new_grid, changed_count)."""
-    new_grid = [[0] * cols for _ in range(rows)]
-    changed = 0
-    for r in range(rows):
-        for c in range(cols):
-            current = grid[r][c]
-            successor = (current + 1) % num_states
-            count = 0
-            for dr in (-1, 0, 1):
-                for dc in (-1, 0, 1):
-                    if dr == 0 and dc == 0:
-                        continue
-                    nr = (r + dr) % rows
-                    nc = (c + dc) % cols
-                    if grid[nr][nc] == successor:
-                        count += 1
-            if count >= threshold:
-                new_grid[r][c] = successor
-                changed += 1
-            else:
-                new_grid[r][c] = current
+    successor = (grid + 1) % num_states
+    count = np.zeros_like(grid)
+    for dr in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            if dr == 0 and dc == 0:
+                continue
+            neighbor = np.roll(np.roll(grid, -dr, axis=0), -dc, axis=1)
+            count += (neighbor == successor).astype(int)
+    advance = count >= threshold
+    new_grid = np.where(advance, successor, grid)
+    changed = int(np.sum(advance))
     return new_grid, changed
 
 
@@ -92,16 +71,18 @@ def run(device, stop_event):
     """Run the cyclic cellular automaton effect."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
 
-    cfg = load_config()
+    cfg = load_config(CONFIG_PATH)
     num_states = cfg.get("NUM_STATES", 14)
     grid = seed_grid(rows, cols, num_states)
     palette = build_palette(num_states)
+    palette_array = np.array(palette, dtype=np.uint8)
     stagnant_frames = 0
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 12)
         num_states_cfg = cfg.get("NUM_STATES", 14)
         threshold = cfg.get("THRESHOLD", 1)
@@ -112,6 +93,7 @@ def run(device, stop_event):
         if num_states_cfg != num_states:
             num_states = num_states_cfg
             palette = build_palette(num_states)
+            palette_array = np.array(palette, dtype=np.uint8)
             grid = seed_grid(rows, cols, num_states)
             stagnant_frames = 0
 
@@ -132,35 +114,17 @@ def run(device, stop_event):
             stagnant_frames = 0
 
         # Render
-        for r in range(rows):
-            for c in range(cols):
-                matrix[r, c] = palette[grid[r][c]]
+        frame_rgb = palette_array[grid]
+        draw_frame(device, frame_rgb)
 
-        device.fx.advanced.draw()
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - cyclic cellular automaton")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

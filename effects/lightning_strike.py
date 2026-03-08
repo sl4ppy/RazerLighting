@@ -9,26 +9,13 @@ Edit lightning_strike_config.py while running to tweak on the fly.
 
 import os
 import random
-import signal
-import sys
-import threading
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from effects.common import load_config, clear_keyboard, wait_interruptible, standalone_main
 
 EFFECT_NAME = "Lightning Strike"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lightning_strike_config.py")
 BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
 
 
 def generate_bolt(cols, rows, wander):
@@ -56,19 +43,11 @@ def generate_branches(path, cols, cfg):
     return branches
 
 
-def draw_frame(matrix, rows, cols, pixels):
+def render_pixels(matrix, rows, cols, pixels):
     """Set the matrix from a dict of (row, col) -> color. Unset pixels go black."""
     for r in range(rows):
         for c in range(cols):
             matrix[r, c] = pixels.get((r, c), BLACK)
-
-
-def wait_interruptible(seconds, stop_event):
-    """Sleep for a duration, returning early if stop_event is set."""
-    end = time.monotonic() + seconds
-    while time.monotonic() < end and not stop_event.is_set():
-        time.sleep(min(0.05, end - time.monotonic()))
-    return not stop_event.is_set()
 
 
 def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, stop_event):
@@ -83,7 +62,7 @@ def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, sto
     pixels = {}
     for r, c in enumerate(path):
         pixels[(r, c)] = glow
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
@@ -100,7 +79,7 @@ def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, sto
             pixels[(r, c)] = branch_color
     for r, c in enumerate(path):
         pixels[(r, c)] = bolt_color
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
@@ -117,7 +96,7 @@ def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, sto
         pixels[(r, c)] = branch_dim
     for r, c in enumerate(path):
         pixels[(r, c)] = bolt_color
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
@@ -127,7 +106,7 @@ def animate_flash(matrix, device, rows, cols, path, branches, cfg, interval, sto
     pixels = {}
     for r, c in enumerate(path):
         pixels[(r, c)] = glow
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
 
@@ -140,14 +119,14 @@ def animate_surge(matrix, device, rows, cols, path, cfg, interval, stop_event):
 
     # Teal surge
     pixels = {(r, c): surge_color for r, c in enumerate(path)}
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
         return
 
     # Dark frame
-    draw_frame(matrix, rows, cols, {})
+    render_pixels(matrix, rows, cols, {})
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
@@ -155,7 +134,7 @@ def animate_surge(matrix, device, rows, cols, path, cfg, interval, stop_event):
 
     # Ice blue flicker
     pixels = {(r, c): branch_dim for r, c in enumerate(path)}
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
     if stop_event.is_set():
@@ -163,7 +142,7 @@ def animate_surge(matrix, device, rows, cols, path, cfg, interval, stop_event):
 
     # Final afterglow
     pixels = {(r, c): glow for r, c in enumerate(path)}
-    draw_frame(matrix, rows, cols, pixels)
+    render_pixels(matrix, rows, cols, pixels)
     device.fx.advanced.draw()
     time.sleep(interval)
 
@@ -175,7 +154,7 @@ def run(device, stop_event):
     matrix = device.fx.advanced.matrix
 
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 15)
         wander = cfg.get("BOLT_WANDER", [-2, -1, -1, 0, 1, 1, 2])
 
@@ -213,7 +192,7 @@ def run(device, stop_event):
             # Optional restrike
             if random.random() < cfg.get("RESTRIKE_CHANCE", 0.6):
                 # Dark gap before restrike
-                draw_frame(matrix, rows, cols, {})
+                render_pixels(matrix, rows, cols, {})
                 device.fx.advanced.draw()
                 dark_frames = random.randint(
                     cfg.get("RESTRIKE_GAP_MIN", 2),
@@ -232,28 +211,16 @@ def run(device, stop_event):
                     animate_surge(matrix, device, rows, cols, path, cfg, interval, stop_event)
 
         # Clear after storm
-        draw_frame(matrix, rows, cols, {})
+        render_pixels(matrix, rows, cols, {})
         device.fx.advanced.draw()
 
     # Clean up
-    draw_frame(matrix, rows, cols, {})
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - lightning strike")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

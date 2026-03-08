@@ -12,40 +12,30 @@ Edit magnetic_field_config.py while running to tweak on the fly.
 import math
 import os
 import random
-import signal
-import sys
-import threading
 import time
+
+import numpy as np
+
+from effects.common import (
+    load_config, draw_frame, clear_keyboard, frame_sleep,
+    make_coordinate_grids, standalone_main,
+)
 
 EFFECT_NAME = "Magnetic Field Lines"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "magnetic_field_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
-def clamp(v, lo=0, hi=255):
-    return max(lo, min(hi, int(v)))
 
 
 def run(device, stop_event):
     """Run the magnetic field lines effect."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
+
+    # Coordinate grids
+    row_grid, col_grid = make_coordinate_grids(rows, cols)
 
     t = 0.0
 
     # Initialize poles with random Lissajous parameters
-    # Each pole: charge, cx, cy, ax, ay, fx, fy, px, py
     poles = []
     for i in range(4):
         charge = 1.0 if i % 2 == 0 else -1.0
@@ -65,8 +55,10 @@ def run(device, stop_event):
             "px": px, "py": py,
         })
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 20)
         num_poles = cfg.get("NUM_POLES", 4)
         pole_speed = cfg.get("POLE_SPEED", 0.006)
@@ -94,89 +86,70 @@ def run(device, stop_event):
                 "py": random.uniform(0, 2 * math.pi),
             })
 
-        # Compute current pole positions
+        epsilon = 0.1
+
+        # Accumulate field vectors across all poles (vectorized over grid)
+        field_x = np.zeros((rows, cols), dtype=np.float64)
+        field_y = np.zeros((rows, cols), dtype=np.float64)
+
+        # Compute current pole positions and accumulate field
         pole_positions = []
         for i in range(num_poles):
             p = poles[i]
-            px = p["cx"] + p["ax"] * math.sin(p["fx"] * t * pole_speed + p["px"])
-            py = p["cy"] + p["ay"] * math.sin(p["fy"] * t * pole_speed + p["py"])
-            # Clamp to keyboard bounds
-            px = max(0.0, min(cols - 1.0, px))
-            py = max(0.0, min(rows - 1.0, py))
-            pole_positions.append((px, py, p["charge"]))
+            px_pos = p["cx"] + p["ax"] * math.sin(p["fx"] * t * pole_speed + p["px"])
+            py_pos = p["cy"] + p["ay"] * math.sin(p["fy"] * t * pole_speed + p["py"])
+            px_pos = max(0.0, min(cols - 1.0, px_pos))
+            py_pos = max(0.0, min(rows - 1.0, py_pos))
+            charge = p["charge"]
+            pole_positions.append((px_pos, py_pos, charge))
 
-        # Render frame
-        epsilon = 0.1
+            dx = col_grid - px_pos
+            dy = row_grid - py_pos
+            dist = np.sqrt(dx * dx + dy * dy) + epsilon
+            strength = charge / (dist * dist)
+            field_x += strength * dx / dist
+            field_y += strength * dy / dist
 
-        for r in range(rows):
-            for c in range(cols):
-                # Compute total field vector at this pixel
-                field_x = 0.0
-                field_y = 0.0
+        # Iron filings visualization (vectorized)
+        field_mag = np.sqrt(field_x * field_x + field_y * field_y)
+        angle = np.arctan2(field_y, field_x)
+        magnitude_factor = np.minimum(1.0, field_mag * field_scale)
+        brightness = np.abs(np.sin(num_lines * angle)) * magnitude_factor
 
-                for pole_x, pole_y, charge in pole_positions:
-                    dx = c - pole_x
-                    dy = r - pole_y
-                    dist = math.sqrt(dx * dx + dy * dy) + epsilon
-                    strength = charge / (dist * dist)
-                    field_x += strength * dx / dist
-                    field_y += strength * dy / dist
+        # Base color from field lines: lerp from bg to line_color by brightness
+        bg_arr = np.array(bg, dtype=np.float64)
+        line_arr = np.array(line_color, dtype=np.float64)
+        # frame shape: (rows, cols, 3)
+        frame = np.zeros((rows, cols, 3), dtype=np.float64)
+        for ch in range(3):
+            frame[:, :, ch] = bg_arr[ch] + brightness * (line_arr[ch] - bg_arr[ch])
 
-                # Iron filings visualization
-                field_mag = math.sqrt(field_x * field_x + field_y * field_y)
-                angle = math.atan2(field_y, field_x)
-                magnitude_factor = min(1.0, field_mag * field_scale)
-                brightness = abs(math.sin(num_lines * angle)) * magnitude_factor
+        # Add pole glow (additive, vectorized per pole)
+        pos_arr = np.array(pos_pole_color, dtype=np.float64)
+        neg_arr = np.array(neg_pole_color, dtype=np.float64)
+        for px_pos, py_pos, charge in pole_positions:
+            dx = col_grid - px_pos
+            dy = row_grid - py_pos
+            dist = np.sqrt(dx * dx + dy * dy)
+            mask = dist < pole_glow_radius
+            glow = np.where(mask, (1.0 - dist / pole_glow_radius) * pole_glow_intensity, 0.0)
+            glow_color = pos_arr if charge > 0 else neg_arr
+            for ch in range(3):
+                frame[:, :, ch] += glow * glow_color[ch]
 
-                # Base color from field lines
-                cr_out = bg[0] + brightness * (line_color[0] - bg[0])
-                cg_out = bg[1] + brightness * (line_color[1] - bg[1])
-                cb_out = bg[2] + brightness * (line_color[2] - bg[2])
+        # Clamp to 0-255 and convert to uint8
+        frame_rgb = np.clip(frame, 0, 255).astype(np.uint8)
 
-                # Add pole glow (additive)
-                for pole_x, pole_y, charge in pole_positions:
-                    dx = c - pole_x
-                    dy = r - pole_y
-                    dist = math.sqrt(dx * dx + dy * dy)
-                    if dist < pole_glow_radius:
-                        glow = (1.0 - dist / pole_glow_radius) * pole_glow_intensity
-                        if charge > 0:
-                            cr_out += pos_pole_color[0] * glow
-                            cg_out += pos_pole_color[1] * glow
-                            cb_out += pos_pole_color[2] * glow
-                        else:
-                            cr_out += neg_pole_color[0] * glow
-                            cg_out += neg_pole_color[1] * glow
-                            cb_out += neg_pole_color[2] * glow
-
-                matrix[r, c] = (clamp(cr_out), clamp(cg_out), clamp(cb_out))
-
-        device.fx.advanced.draw()
+        draw_frame(device, frame_rgb)
         t += 1.0
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - magnetic field")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

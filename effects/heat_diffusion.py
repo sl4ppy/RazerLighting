@@ -9,59 +9,32 @@ transitions from black through red, orange, and yellow to white.
 Edit heat_diffusion_config.py while running to tweak on the fly.
 """
 
-import math
 import os
-import random
-import signal
-import sys
-import threading
 import time
+
+import numpy as np
+
+from effects.common import (
+    load_config, draw_frame, clear_keyboard, frame_sleep,
+    build_palette_lut, palette_lookup, laplacian_4pt_open, standalone_main,
+)
 
 EFFECT_NAME = "Heat Diffusion"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "heat_diffusion_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
-def heat_to_color(palette, heat):
-    """Map a heat value (0.0+) to a color by interpolating through the palette."""
-    if not palette:
-        return (0, 0, 0)
-    # Clamp heat to [0, 1] for palette lookup
-    t = max(0.0, min(1.0, heat))
-    pos = t * (len(palette) - 1)
-    idx = int(pos)
-    frac = pos - idx
-    if idx >= len(palette) - 1:
-        return palette[-1]
-    c1, c2 = palette[idx], palette[idx + 1]
-    return (
-        int(c1[0] + (c2[0] - c1[0]) * frac),
-        int(c1[1] + (c2[1] - c1[1]) * frac),
-        int(c1[2] + (c2[2] - c1[2]) * frac),
-    )
 
 
 def run(device, stop_event):
     """Run the heat diffusion effect."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
 
     # Initialize heat grid
-    heat = [[0.0] * cols for _ in range(rows)]
+    heat = np.zeros((rows, cols), dtype=np.float64)
+
+    next_frame = time.monotonic()
 
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 20)
         diffusion_rate = cfg.get("DIFFUSION_RATE", 0.25)
         cooling = cfg.get("COOLING", 0.008)
@@ -69,66 +42,33 @@ def run(device, stop_event):
         ignition_heat = cfg.get("IGNITION_HEAT", 1.0)
         palette = cfg.get("PALETTE", [(0, 0, 0), (180, 0, 0), (255, 100, 0), (255, 220, 50), (255, 255, 255)])
 
+        # Build palette LUT for rendering
+        lut = build_palette_lut(palette)
+
         # Random ignition
-        for r in range(rows):
-            for c in range(cols):
-                if random.random() < ignition_chance:
-                    heat[r][c] = ignition_heat
+        ignite_mask = np.random.random((rows, cols)) < ignition_chance
+        heat[ignite_mask] = ignition_heat
 
-        # Diffusion via discrete Laplacian
-        new_heat = [[0.0] * cols for _ in range(rows)]
-        for r in range(rows):
-            for c in range(cols):
-                # Sum of 4 neighbors (open boundary: out-of-bounds treated as 0)
-                neighbors = 0.0
-                if r > 0:
-                    neighbors += heat[r - 1][c]
-                if r < rows - 1:
-                    neighbors += heat[r + 1][c]
-                if c > 0:
-                    neighbors += heat[r][c - 1]
-                if c < cols - 1:
-                    neighbors += heat[r][c + 1]
-
-                new_heat[r][c] = heat[r][c] + diffusion_rate * (neighbors - 4.0 * heat[r][c])
+        # Diffusion via discrete Laplacian (open boundaries)
+        heat += diffusion_rate * laplacian_4pt_open(heat)
 
         # Global cooling and clamping
-        for r in range(rows):
-            for c in range(cols):
-                new_heat[r][c] = max(0.0, new_heat[r][c] - cooling)
-
-        heat = new_heat
+        heat -= cooling
+        np.clip(heat, 0.0, None, out=heat)
 
         # Render
-        for r in range(rows):
-            for c in range(cols):
-                matrix[r, c] = heat_to_color(palette, heat[r][c])
+        values = np.clip(heat, 0.0, 1.0)
+        frame_rgb = palette_lookup(lut, values)
+        draw_frame(device, frame_rgb)
 
-        device.fx.advanced.draw()
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - heat diffusion")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

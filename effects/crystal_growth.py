@@ -13,24 +13,12 @@ Edit crystal_growth_config.py while running to tweak on the fly.
 
 import os
 import random
-import signal
-import sys
-import threading
 import time
+
+from effects.common import load_config, clear_keyboard, frame_sleep, sample_palette, standalone_main
 
 EFFECT_NAME = "Crystal Growth"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "crystal_growth_config.py")
-BLACK = (0, 0, 0)
-
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
 
 
 def spawn_walker_edge(rows, cols):
@@ -44,26 +32,6 @@ def spawn_walker_edge(rows, cols):
         return [random.randint(0, rows - 1), 0]
     else:              # right
         return [random.randint(0, rows - 1), cols - 1]
-
-
-def palette_color(order, total_attached, palette):
-    """Map attachment order to a palette color via linear interpolation."""
-    if total_attached <= 1:
-        return palette[0]
-    t = order / max(total_attached - 1, 1)
-    t = max(0.0, min(1.0, t))
-    seg = t * (len(palette) - 1)
-    idx = int(seg)
-    frac = seg - idx
-    if idx >= len(palette) - 1:
-        return palette[-1]
-    c0 = palette[idx]
-    c1 = palette[idx + 1]
-    return (
-        int(c0[0] + (c1[0] - c0[0]) * frac),
-        int(c0[1] + (c1[1] - c0[1]) * frac),
-        int(c0[2] + (c1[2] - c0[2]) * frac),
-    )
 
 
 def run(device, stop_event):
@@ -88,8 +56,10 @@ def run(device, stop_event):
 
         walkers = []
 
+        next_frame = time.monotonic()
+
         while not stop_event.is_set():
-            cfg = load_config()
+            cfg = load_config(CONFIG_PATH)
             interval = 1.0 / cfg.get("FPS", 12)
             max_walkers = cfg.get("MAX_WALKERS", 30)
             walk_steps = cfg.get("WALK_STEPS", 40)
@@ -122,13 +92,13 @@ def run(device, stop_event):
                     w[0] += dr
                     w[1] += dc
 
-                    # Out of bounds — respawn
+                    # Out of bounds -- respawn
                     if w[0] < 0 or w[0] >= rows or w[1] < 0 or w[1] >= cols:
                         w[:] = spawn_walker_edge(rows, cols)
                         next_walkers.append(w)
                         continue
 
-                    # Landed on crystal — respawn
+                    # Landed on crystal -- respawn
                     if crystal[w[0]][w[1]]:
                         w[:] = spawn_walker_edge(rows, cols)
                         next_walkers.append(w)
@@ -164,9 +134,10 @@ def run(device, stop_event):
             for r in range(rows):
                 for c in range(cols):
                     if crystal[r][c]:
+                        t = attach_order[r][c] / max(total_attached - 1, 1)
+                        base = sample_palette(palette, t)
                         if flash_remaining[r][c] > 0:
                             f = flash_remaining[r][c] / flash_frames
-                            base = palette_color(attach_order[r][c], total_attached, palette)
                             color = (
                                 int(base[0] + (255 - base[0]) * f),
                                 int(base[1] + (255 - base[1]) * f),
@@ -174,40 +145,25 @@ def run(device, stop_event):
                             )
                             flash_remaining[r][c] -= 1
                         else:
-                            color = palette_color(attach_order[r][c], total_attached, palette)
+                            color = base
                         matrix[r, c] = color
                     else:
                         matrix[r, c] = bg
 
             device.fx.advanced.draw()
-            time.sleep(interval)
 
-            # Check fill threshold — reset after rendering
+            next_frame = frame_sleep(next_frame, interval)
+
+            # Check fill threshold -- reset after rendering
             if total_attached / total_cells > fill_threshold:
                 break
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - crystal growth")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":

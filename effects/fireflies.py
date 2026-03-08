@@ -11,60 +11,40 @@ Edit fireflies_config.py while running to tweak on the fly.
 
 import math
 import os
-import random
-import signal
-import sys
-import threading
 import time
+
+import numpy as np
+
+from effects.common import (
+    load_config, draw_frame, clear_keyboard, frame_sleep, standalone_main,
+)
 
 EFFECT_NAME = "Fireflies"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fireflies_config.py")
-BLACK = (0, 0, 0)
 
-
-def load_config():
-    cfg = {}
-    try:
-        with open(CONFIG_PATH) as f:
-            exec(f.read(), cfg)
-    except Exception as e:
-        print(f"Config load error: {e}", file=sys.stderr)
-    return cfg
-
-
-def lerp_color(a, b, t):
-    t = max(0.0, min(1.0, t))
-    return (
-        int(a[0] + (b[0] - a[0]) * t),
-        int(a[1] + (b[1] - a[1]) * t),
-        int(a[2] + (b[2] - a[2]) * t),
-    )
+TWO_PI = 2.0 * math.pi
 
 
 def run(device, stop_event):
     """Run the fireflies effect."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
-
-    TWO_PI = 2.0 * math.pi
 
     # Initialize oscillator phases randomly across the full cycle
-    phases = [[random.uniform(0.0, TWO_PI) for _ in range(cols)] for _ in range(rows)]
+    phases = np.random.uniform(0.0, TWO_PI, (rows, cols))
 
     # Draw natural frequencies from a normal distribution
-    cfg = load_config()
+    cfg = load_config(CONFIG_PATH)
     mean_freq = cfg.get("MEAN_FREQ", 0.12)
     freq_spread = cfg.get("FREQ_SPREAD", 0.02)
-    nat_freqs = [
-        [random.gauss(mean_freq, freq_spread) for _ in range(cols)]
-        for _ in range(rows)
-    ]
+    nat_freqs = np.random.normal(mean_freq, freq_spread, (rows, cols))
 
     t = 0.0
 
+    next_frame = time.monotonic()
+
     while not stop_event.is_set():
-        cfg = load_config()
+        cfg = load_config(CONFIG_PATH)
         interval = 1.0 / cfg.get("FPS", 20)
         coupling = cfg.get("COUPLING", 0.15)
         coupling_speed = cfg.get("COUPLING_SPEED", 0.003)
@@ -78,77 +58,83 @@ def run(device, stop_event):
         K = coupling * (0.5 + 0.5 * math.sin(t * coupling_speed))
 
         # Kuramoto phase update with Moore neighborhood (8-connected)
-        new_phases = [[0.0] * cols for _ in range(rows)]
-        for r in range(rows):
-            for c in range(cols):
-                phase_i = phases[r][c]
-                coupling_sum = 0.0
-                n_neighbors = 0
+        # Accumulate coupling sum from all 8 neighbors using np.roll
+        # Use open boundaries by masking edge contributions
+        coupling_sum = np.zeros((rows, cols), dtype=np.float64)
+        neighbor_count = np.zeros((rows, cols), dtype=np.float64)
 
-                for dr in (-1, 0, 1):
-                    for dc in (-1, 0, 1):
-                        if dr == 0 and dc == 0:
-                            continue
-                        nr, nc = r + dr, c + dc
-                        if 0 <= nr < rows and 0 <= nc < cols:
-                            coupling_sum += math.sin(phases[nr][nc] - phase_i)
-                            n_neighbors += 1
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                if dr == 0 and dc == 0:
+                    continue
+                shifted = np.roll(np.roll(phases, -dr, axis=0), -dc, axis=1)
+                sin_diff = np.sin(shifted - phases)
 
-                if n_neighbors > 0:
-                    d_phase = nat_freqs[r][c] + (K / n_neighbors) * coupling_sum
-                else:
-                    d_phase = nat_freqs[r][c]
+                # Build mask for valid neighbors (open boundaries)
+                mask = np.ones((rows, cols), dtype=np.bool_)
+                if dr == -1:
+                    mask[0, :] = False
+                elif dr == 1:
+                    mask[rows - 1, :] = False
+                if dc == -1:
+                    mask[:, 0] = False
+                elif dc == 1:
+                    mask[:, cols - 1] = False
 
-                new_phases[r][c] = (phase_i + d_phase) % TWO_PI
+                coupling_sum += sin_diff * mask
+                neighbor_count += mask
 
-        phases = new_phases
+        # Avoid division by zero (corners still have at least 3 neighbors)
+        d_phase = nat_freqs + (K / neighbor_count) * coupling_sum
+        phases = (phases + d_phase) % TWO_PI
 
-        # Render: map phase to brightness and color
-        for r in range(rows):
-            for c in range(cols):
-                # Brightness from phase: sin(phase) clamped to [0,1], raised to sharpness
-                raw = math.sin(phases[r][c])
-                brightness = max(0.0, raw) ** sharpness
+        # Compute brightness: sin(phase) clamped to [0,1], raised to sharpness
+        raw = np.sin(phases)
+        brightness = np.maximum(0.0, raw) ** sharpness
 
-                # Map brightness through firefly color gradient
-                if brightness < 0.3:
-                    # dim to mid
-                    color = lerp_color(dim_color, mid_color, brightness / 0.3)
-                elif brightness < 0.7:
-                    # mid to bright
-                    color = lerp_color(mid_color, bright_color, (brightness - 0.3) / 0.4)
-                else:
-                    # bright to flash
-                    color = lerp_color(bright_color, flash_color, (brightness - 0.7) / 0.3)
+        # Map brightness through 3-segment firefly color gradient using np.where
+        dim = np.array(dim_color, dtype=np.float64)
+        mid = np.array(mid_color, dtype=np.float64)
+        bright = np.array(bright_color, dtype=np.float64)
+        flash = np.array(flash_color, dtype=np.float64)
 
-                matrix[r, c] = color
+        # Segment 1: brightness < 0.3 -> dim to mid (t = brightness / 0.3)
+        # Segment 2: 0.3 <= brightness < 0.7 -> mid to bright (t = (brightness - 0.3) / 0.4)
+        # Segment 3: brightness >= 0.7 -> bright to flash (t = (brightness - 0.7) / 0.3)
+        seg_t = np.zeros((rows, cols), dtype=np.float64)
+        c1 = np.zeros((rows, cols, 3), dtype=np.float64)
+        c2 = np.zeros((rows, cols, 3), dtype=np.float64)
 
-        device.fx.advanced.draw()
+        mask_low = brightness < 0.3
+        mask_mid = (brightness >= 0.3) & (brightness < 0.7)
+        mask_high = brightness >= 0.7
+
+        seg_t[mask_low] = brightness[mask_low] / 0.3
+        c1[mask_low] = dim
+        c2[mask_low] = mid
+
+        seg_t[mask_mid] = (brightness[mask_mid] - 0.3) / 0.4
+        c1[mask_mid] = mid
+        c2[mask_mid] = bright
+
+        seg_t[mask_high] = (brightness[mask_high] - 0.7) / 0.3
+        c1[mask_high] = bright
+        c2[mask_high] = flash
+
+        seg_t_3d = seg_t[:, :, np.newaxis]
+        frame_float = c1 + (c2 - c1) * seg_t_3d
+        frame_rgb = np.clip(frame_float, 0, 255).astype(np.uint8)
+
+        draw_frame(device, frame_rgb)
         t += 1.0
-        time.sleep(interval)
+        next_frame = frame_sleep(next_frame, interval)
 
-    # Clean up
-    for r in range(rows):
-        for c in range(cols):
-            matrix[r, c] = BLACK
-    device.fx.advanced.draw()
+    clear_keyboard(device)
 
 
 def main():
     """Standalone entry point."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from device import get_device
-
-    device = get_device()
-    stop_event = threading.Event()
-
-    print(f"{device.name} ({device.fx.advanced.cols}x{device.fx.advanced.rows}) - fireflies")
-    print("Ctrl+C to stop")
-
-    signal.signal(signal.SIGINT, lambda *_: stop_event.set())
-    signal.signal(signal.SIGTERM, lambda *_: stop_event.set())
-
-    run(device, stop_event)
+    standalone_main(EFFECT_NAME, run)
 
 
 if __name__ == "__main__":
