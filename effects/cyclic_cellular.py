@@ -111,7 +111,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 12)
+        fps = cfg.get("FPS", 12)
+        interval = 1.0 / fps
         num_states_cfg = cfg.get("NUM_STATES", 14)
         threshold = cfg.get("THRESHOLD", 1)
         sim_steps = cfg.get("SIM_STEPS_PER_FRAME", 1)
@@ -147,7 +148,7 @@ def run(device, stop_event):
         frame_rgb = palette_array[grid]
         draw_frame(device, frame_rgb)
 
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, _dt = frame_sleep(next_frame, interval)
 
     clear_keyboard(device)
 

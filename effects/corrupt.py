@@ -150,7 +150,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 15)
+        fps = cfg.get("FPS", 15)
+        interval = 1.0 / fps
         idle_color = cfg.get("IDLE_COLOR", (0, 25, 30))
         max_patches = cfg.get("MAX_PATCHES", 3)
         spawn_chance = cfg.get("SPAWN_CHANCE", 0.12)
@@ -189,7 +190,7 @@ def run(device, stop_event):
                 matrix[r, c] = frame[r][c]
         device.fx.advanced.draw()
 
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, _dt = frame_sleep(next_frame, interval)
 
     clear_keyboard(device)
 

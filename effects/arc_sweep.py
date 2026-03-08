@@ -82,7 +82,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         now = time.monotonic()
 
         if now >= next_spawn:
@@ -124,11 +125,10 @@ def run(device, stop_event):
                 matrix[r, c] = frame[r][c]
         device.fx.advanced.draw()
 
+        next_frame, dt = frame_sleep(next_frame, interval)
         for arc in arcs:
-            arc["pos"] += arc["speed"]
+            arc["pos"] += arc["speed"] * dt * fps
         arcs = [a for a in arcs if a["pos"] < a["p_max"]]
-
-        next_frame = frame_sleep(next_frame, interval)
 
     clear_keyboard(device)
 

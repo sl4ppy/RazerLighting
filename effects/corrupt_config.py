@@ -19,10 +19,10 @@ PATCH_LIFE_MAX = 15
 
 # Colors — cyberpunk palette (shared with Glitch)
 GLITCH_COLORS = [
-    (255, 0, 100),             # hot magenta
-    (0, 255, 220),             # electric cyan
-    (255, 255, 255),           # white
-    (180, 0, 255),             # neon purple
-    (0, 255, 60),              # acid green
-    (255, 100, 0),             # hot orange
+    (255, 0, 100),
+    (0, 255, 220),
+    (255, 255, 255),
+    (180, 0, 255),
+    (0, 255, 60),
+    (255, 100, 0),
 ]

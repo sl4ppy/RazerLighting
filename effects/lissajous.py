@@ -43,7 +43,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 24)
+        fps = cfg.get("FPS", 24)
+        interval = 1.0 / fps
         cfg_freq_x = cfg.get("FREQ_X", 3.0)
         cfg_freq_y = cfg.get("FREQ_Y", 2.0)
         phase_speed = cfg.get("PHASE_SPEED", 0.02)
@@ -127,10 +128,9 @@ def run(device, stop_event):
                 matrix[r, c] = frame[r][c]
         device.fx.advanced.draw()
 
-        t += anim_speed
-        phase += phase_speed
-
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += anim_speed * dt * fps
+        phase += phase_speed * dt * fps
 
     clear_keyboard(device)
 

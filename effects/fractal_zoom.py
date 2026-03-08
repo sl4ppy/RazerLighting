@@ -37,7 +37,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 15)
+        fps = cfg.get("FPS", 15)
+        interval = 1.0 / fps
         zoom_speed = cfg.get("ZOOM_SPEED", 0.03)
         zoom_range = cfg.get("ZOOM_RANGE", 3.0)
         rotation_speed = cfg.get("ROTATION_SPEED", 0.01)
@@ -149,8 +150,8 @@ def run(device, stop_event):
             frame_rgb = (frame_rgb.astype(np.float64) * brightness).astype(np.uint8)
 
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

@@ -38,7 +38,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         nodal_width = cfg.get("NODAL_WIDTH", 0.4)
         morph_speed = cfg.get("MORPH_SPEED", 0.008)
         pulse_speed = cfg.get("PULSE_SPEED", 0.06)
@@ -49,8 +50,8 @@ def run(device, stop_event):
 
         num_pairs = len(mode_pairs)
         if num_pairs == 0:
-            next_frame = frame_sleep(next_frame, interval)
-            t += 1.0
+            next_frame, dt = frame_sleep(next_frame, interval)
+            t += dt * fps
             continue
 
         # Determine current and next mode pair for crossfade
@@ -104,8 +105,8 @@ def run(device, stop_event):
         frame_rgb = np.clip(frame_rgb, 0, 255).astype(np.uint8)
 
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

@@ -73,7 +73,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         scroll_speed = cfg.get("SCROLL_SPEED", 0.03)
         curtain_freq = cfg.get("CURTAIN_FREQ", 0.8)
         curtain_speed = cfg.get("CURTAIN_SPEED", 0.05)
@@ -141,8 +142,8 @@ def run(device, stop_event):
 
         frame_rgb = np.clip(frame, 0, 255).astype(np.uint8)
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

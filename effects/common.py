@@ -120,7 +120,12 @@ def clear_keyboard(device):
 # --- Timing ---
 
 def frame_sleep(next_frame_time, interval):
-    """Sleep until next frame deadline. Returns the next deadline."""
+    """Sleep until next frame deadline. Returns (next_deadline, dt).
+
+    dt is the actual elapsed time since the previous deadline, capped at
+    3× interval to avoid huge jumps after a system suspend/resume.
+    """
+    prev = next_frame_time
     next_frame_time += interval
     now = time.monotonic()
     if next_frame_time > now:
@@ -128,7 +133,8 @@ def frame_sleep(next_frame_time, interval):
     else:
         # We're behind; reset to avoid spiral
         next_frame_time = now
-    return next_frame_time
+    dt = min(next_frame_time - prev, interval * 3)
+    return next_frame_time, dt
 
 
 def wait_interruptible(seconds, stop_event):

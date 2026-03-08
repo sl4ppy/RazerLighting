@@ -33,7 +33,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         scale_x = cfg.get("SCALE_X", 0.35)
         scale_y = cfg.get("SCALE_Y", 0.6)
         time_speed = cfg.get("TIME_SPEED", 0.04)
@@ -86,8 +87,8 @@ def run(device, stop_event):
             ).astype(np.uint8)
 
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

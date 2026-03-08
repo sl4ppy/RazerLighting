@@ -37,7 +37,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         wave_speed = cfg.get("WAVE_SPEED", 0.08)
         wave_count = cfg.get("WAVE_COUNT", 2.5)
         swell_speed = cfg.get("SWELL_SPEED", 0.02)
@@ -104,8 +105,8 @@ def run(device, stop_event):
         frame_rgb[foam_mask] = spray
 
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

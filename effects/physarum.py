@@ -54,7 +54,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         sensor_angle = cfg.get("SENSOR_ANGLE", 0.6)
         sensor_dist = cfg.get("SENSOR_DIST", 4.0)
         turn_speed = cfg.get("TURN_SPEED", 0.5)
@@ -143,7 +144,7 @@ def run(device, stop_event):
         frame_rgb = palette_lookup(lut, normalized)
         draw_frame(device, frame_rgb)
 
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, _dt = frame_sleep(next_frame, interval)
 
     clear_keyboard(device)
 

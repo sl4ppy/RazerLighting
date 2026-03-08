@@ -43,7 +43,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         num_embers = cfg.get("NUM_EMBERS", 60)
         spawn_rate = cfg.get("SPAWN_RATE", 0.4)
         rise_speed = cfg.get("RISE_SPEED", 0.12)
@@ -146,8 +147,8 @@ def run(device, stop_event):
 
         frame_rgb = np.clip(frame, 0, 255).astype(np.uint8)
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

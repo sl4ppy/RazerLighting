@@ -50,7 +50,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 24)
+        fps = cfg.get("FPS", 24)
+        interval = 1.0 / fps
         speed = cfg.get("SPEED", 0.6)
         damping = cfg.get("DAMPING", 0.985)
         amplitude = cfg.get("AMPLITUDE", 0.8)
@@ -104,8 +105,8 @@ def run(device, stop_event):
         frame_rgb = palette_lookup(lut, values)
         draw_frame(device, frame_rgb)
 
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

@@ -47,7 +47,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 20)
+        interval = 1.0 / fps
         visual_range = cfg.get("VISUAL_RANGE", 4.0)
         sep_dist = cfg.get("SEPARATION_DIST", 1.5)
         w_sep = cfg.get("W_SEPARATION", 0.08)
@@ -185,8 +186,8 @@ def run(device, stop_event):
         frame_rgb = palette_lookup(lut, values)
         draw_frame(device, frame_rgb)
 
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 

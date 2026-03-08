@@ -52,7 +52,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 24)
+        fps = cfg.get("FPS", 24)
+        interval = 1.0 / fps
         num_blobs = cfg.get("NUM_BLOBS", 4)
         blob_radius = cfg.get("BLOB_RADIUS", 1.5)
         speed = cfg.get("SPEED", 0.015)
@@ -92,8 +93,8 @@ def run(device, stop_event):
         frame_rgb = palette_lookup(lut, palette_t)
         draw_frame(device, frame_rgb)
 
-        t += speed
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += speed * dt * fps
 
     clear_keyboard(device)
 

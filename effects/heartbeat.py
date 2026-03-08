@@ -51,6 +51,7 @@ def run(device, stop_event):
     t_frames = 0.0
     next_frame = time.monotonic()
     last_beat_phase = 0.0
+    dt = 0.0
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
@@ -75,7 +76,6 @@ def run(device, stop_event):
         ])
         lut = build_palette_lut(palette)
 
-        dt = interval
         t_real += dt
 
         # Oscillating BPM
@@ -135,8 +135,8 @@ def run(device, stop_event):
 
         frame_rgb = palette_lookup(lut, total)
         draw_frame(device, frame_rgb)
-        t_frames += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t_frames += dt * fps
 
     clear_keyboard(device)
 

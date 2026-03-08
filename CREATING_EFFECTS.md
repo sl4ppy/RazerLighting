@@ -88,10 +88,20 @@ from effects.common import frame_sleep
 next_frame = time.monotonic()
 while not stop_event.is_set():
     # ... render frame ...
-    next_frame = frame_sleep(next_frame, 1.0 / 20)  # 20 FPS
+    next_frame, dt = frame_sleep(next_frame, 1.0 / 20)  # 20 FPS
 ```
 
-`frame_sleep` uses deadline-based timing instead of `time.sleep(interval)`, preventing frame drift.
+`frame_sleep` uses deadline-based timing instead of `time.sleep(interval)`, preventing frame drift. It returns `(next_deadline, dt)` where `dt` is the actual elapsed time since the previous frame. Use `dt` to make animation speed independent of frame rate:
+
+```python
+fps = cfg.get("FPS", 20)
+interval = 1.0 / fps
+# ...
+next_frame, dt = frame_sleep(next_frame, interval)
+t += dt * fps  # advances by 1.0 at target FPS, more when behind
+```
+
+This ensures effects run at the same visual speed regardless of whether `draw()` is fast or slow (e.g. after a reboot or driver change).
 
 ### Palette colors
 
@@ -238,8 +248,8 @@ def run(device, stop_event):
         frame_rgb = palette_lookup(lut, values)
         draw_frame(device, frame_rgb)
 
-        t = (t + speed) % 1.0
-        next_frame = frame_sleep(next_frame, 1.0 / fps)
+        next_frame, dt = frame_sleep(next_frame, 1.0 / fps)
+        t = (t + speed * dt * fps) % 1.0
 
     clear_keyboard(device)
 

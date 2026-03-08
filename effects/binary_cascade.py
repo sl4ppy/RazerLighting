@@ -42,7 +42,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 18)
+        fps = cfg.get("FPS", 18)
+        interval = 1.0 / fps
         bg = cfg.get("BG_COLOR", (0, 20, 8))
         head_color = cfg.get("HEAD_COLOR", (255, 255, 255))
         bright = cfg.get("BRIGHT_COLOR", (0, 255, 0))
@@ -115,14 +116,14 @@ def run(device, stop_event):
                 matrix[r, c] = frame[r][c]
         device.fx.advanced.draw()
 
+        next_frame, dt = frame_sleep(next_frame, interval)
+
         # Advance streams
         for stream in streams:
-            stream["pos"] += stream["speed"]
+            stream["pos"] += stream["speed"] * dt * fps
 
         # Remove streams that have fully exited
         streams = [s for s in streams if int(s["pos"]) - s["trail_len"] < rows]
-
-        next_frame = frame_sleep(next_frame, interval)
 
     # Clean up
     clear_keyboard(device)

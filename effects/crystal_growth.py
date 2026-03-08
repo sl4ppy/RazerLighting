@@ -60,7 +60,8 @@ def run(device, stop_event):
 
         while not stop_event.is_set():
             cfg = load_config(CONFIG_PATH)
-            interval = 1.0 / cfg.get("FPS", 12)
+            fps = cfg.get("FPS", 12)
+            interval = 1.0 / fps
             max_walkers = cfg.get("MAX_WALKERS", 30)
             walk_steps = cfg.get("WALK_STEPS", 40)
             max_attach = cfg.get("MAX_ATTACH_PER_FRAME", 1)
@@ -152,7 +153,7 @@ def run(device, stop_event):
 
             device.fx.advanced.draw()
 
-            next_frame = frame_sleep(next_frame, interval)
+            next_frame, _dt = frame_sleep(next_frame, interval)
 
             # Check fill threshold -- reset after rendering
             if total_attached / total_cells > fill_threshold:

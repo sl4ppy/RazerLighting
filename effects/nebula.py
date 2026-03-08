@@ -72,7 +72,8 @@ def run(device, stop_event):
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        interval = 1.0 / cfg.get("FPS", 18)
+        fps = cfg.get("FPS", 18)
+        interval = 1.0 / fps
         scale1 = cfg.get("NOISE_SCALE_1", 0.12)
         scale2 = cfg.get("NOISE_SCALE_2", 0.18)
         drift1 = cfg.get("DRIFT_SPEED_1", 0.015)
@@ -134,8 +135,8 @@ def run(device, stop_event):
 
         frame_rgb = np.clip(frame, 0, 255).astype(np.uint8)
         draw_frame(device, frame_rgb)
-        t += 1.0
-        next_frame = frame_sleep(next_frame, interval)
+        next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
 
     clear_keyboard(device)
 
