@@ -32,35 +32,47 @@ TEMP_DIR = "/tmp/razer-lighting-preview"
 SETTINGS_ORG = "RazerLighting"
 SETTINGS_APP = "ConfigWindow"
 
-# Razer Blade 14 2021 keyboard layout
-# Each key: (label, col_index, width_in_units)
-# col_index is the matrix column this key maps to
-# Keys with None label are hidden matrix positions (still receive color data)
+# Razer Blade 14 2021 keyboard layout (from Polychromatic SVG / OpenRazer matrix)
+#
+# Standard key:   (label, matrix_col, width)
+# Row override:   (label, matrix_col, width, matrix_row)
+# Half-height:    (label, matrix_col, width, matrix_row, height, y_offset)
+# No-advance:     (label, matrix_col, width, matrix_row, height, y_offset, 0)
+# Spacer (gap):   (None, -1, width)   — advances x, draws nothing
+#
+# Column 0 is unused (legacy macro key position). Physical keys use cols 1–15.
+# The spacebar has no LED on this model.
+# ↑ (col 13) and ↓ (col 15) are half-height keys stacked in the same cell.
 KEYBOARD_LAYOUT = [
-    # Row 0: Function row (14 physical keys)
-    [("Esc", 0, 1.0), ("F1", 1, 1.0), ("F2", 2, 1.0), ("F3", 3, 1.0), ("F4", 4, 1.0),
-     ("F5", 5, 1.0), ("F6", 6, 1.0), ("F7", 7, 1.0), ("F8", 8, 1.0), ("F9", 9, 1.0),
-     ("F10", 10, 1.0), ("F11", 11, 1.0), ("F12", 12, 1.0), ("Del", 13, 1.0)],
-    # Row 1: Number row
-    [("`", 0, 1.0), ("1", 1, 1.0), ("2", 2, 1.0), ("3", 3, 1.0), ("4", 4, 1.0),
-     ("5", 5, 1.0), ("6", 6, 1.0), ("7", 7, 1.0), ("8", 8, 1.0), ("9", 9, 1.0),
-     ("0", 10, 1.0), ("-", 11, 1.0), ("=", 12, 1.0), ("Bksp", 13, 2.0)],
-    # Row 2: QWERTY top
-    [("Tab", 0, 1.5), ("Q", 1, 1.0), ("W", 2, 1.0), ("E", 3, 1.0), ("R", 4, 1.0),
-     ("T", 5, 1.0), ("Y", 6, 1.0), ("U", 7, 1.0), ("I", 8, 1.0), ("O", 9, 1.0),
-     ("P", 10, 1.0), ("[", 11, 1.0), ("]", 12, 1.0), ("\\", 13, 1.5)],
-    # Row 3: Home row
-    [("Caps", 0, 1.75), ("A", 1, 1.0), ("S", 2, 1.0), ("D", 3, 1.0), ("F", 4, 1.0),
-     ("G", 5, 1.0), ("H", 6, 1.0), ("J", 7, 1.0), ("K", 8, 1.0), ("L", 9, 1.0),
-     (";", 10, 1.0), ("'", 11, 1.0), ("Enter", 12, 2.25)],
-    # Row 4: Shift row
-    [("Shift", 0, 2.25), ("Z", 1, 1.0), ("X", 2, 1.0), ("C", 3, 1.0), ("V", 4, 1.0),
-     ("B", 5, 1.0), ("N", 6, 1.0), ("M", 7, 1.0), (",", 8, 1.0), (".", 9, 1.0),
-     ("/", 10, 1.0), ("Shift", 11, 1.75), ("\u2191", 12, 1.0)],
-    # Row 5: Bottom row
-    [("Ctrl", 0, 1.25), ("Fn", 1, 1.0), ("Super", 2, 1.25), ("Alt", 3, 1.25),
-     ("Space", 4, 6.25), ("Alt", 9, 1.0), ("Ctrl", 10, 1.0),
-     ("\u2190", 11, 1.0), ("\u2193", 12, 1.0), ("\u2192", 13, 1.0)],
+    # Row 0: Function row (15 keys, all 1u)
+    [("Esc", 1, 1.0), ("F1", 2, 1.0), ("F2", 3, 1.0), ("F3", 4, 1.0), ("F4", 5, 1.0),
+     ("F5", 6, 1.0), ("F6", 7, 1.0), ("F7", 8, 1.0), ("F8", 9, 1.0), ("F9", 10, 1.0),
+     ("F10", 11, 1.0), ("F11", 12, 1.0), ("F12", 13, 1.0), ("Ins", 14, 1.0),
+     ("Del", 15, 1.0)],
+    # Row 1: Number row (14 keys)
+    [("`", 1, 1.0), ("1", 2, 1.0), ("2", 3, 1.0), ("3", 4, 1.0), ("4", 5, 1.0),
+     ("5", 6, 1.0), ("6", 7, 1.0), ("7", 8, 1.0), ("8", 9, 1.0), ("9", 10, 1.0),
+     ("0", 11, 1.0), ("-", 12, 1.0), ("=", 13, 1.0), ("Bksp", 15, 2.0)],
+    # Row 2: QWERTY top (14 keys)
+    [("Tab", 1, 1.5), ("Q", 2, 1.0), ("W", 3, 1.0), ("E", 4, 1.0), ("R", 5, 1.0),
+     ("T", 6, 1.0), ("Y", 7, 1.0), ("U", 8, 1.0), ("I", 9, 1.0), ("O", 10, 1.0),
+     ("P", 11, 1.0), ("[", 12, 1.0), ("]", 13, 1.0), ("\\", 15, 1.5)],
+    # Row 3: Home row (13 keys)
+    [("Caps", 1, 1.75), ("A", 2, 1.0), ("S", 3, 1.0), ("D", 4, 1.0), ("F", 5, 1.0),
+     ("G", 6, 1.0), ("H", 7, 1.0), ("J", 8, 1.0), ("K", 9, 1.0), ("L", 10, 1.0),
+     (";", 11, 1.0), ("'", 12, 1.0), ("Enter", 15, 2.25)],
+    # Row 4: Shift row (12 keys — RShift extends to right edge)
+    [("Shift", 1, 2.0), ("Z", 3, 1.0), ("X", 4, 1.0), ("C", 5, 1.0), ("V", 6, 1.0),
+     ("B", 7, 1.0), ("N", 8, 1.0), ("M", 9, 1.0), (",", 10, 1.0), (".", 11, 1.0),
+     ("/", 12, 1.0), ("Shift", 15, 3.0)],
+    # Row 5: Bottom row (no spacebar LED; ↑/↓ half-height stacked)
+    [("Ctrl", 1, 1.0), ("Fn", 2, 1.0), ("Super", 3, 1.0), ("Alt", 5, 1.0),
+     (None, -1, 5.0),
+     ("Alt", 9, 1.0), ("Fn", 10, 1.0), ("Ctrl", 11, 1.0),
+     ("\u2190", 12, 1.0),
+     ("\u2191", 13, 1.0, 5, 0.46, 0.0, 0.0),
+     ("\u2193", 15, 1.0, 5, 0.46, 0.54),
+     ("\u2192", 14, 1.0)],
 ]
 
 
@@ -818,17 +830,29 @@ class KeyboardVisualizer(QWidget):
 
         for row_idx, row_keys in enumerate(KEYBOARD_LAYOUT):
             x = 0.0
-            for label, col_idx, width_u in row_keys:
+            for key_def in row_keys:
+                label = key_def[0]
+                width_u = key_def[2]
+                if label is None:
+                    x += width_u          # spacer — advance position only
+                    continue
+                n = len(key_def)
+                col_idx = key_def[1]
+                matrix_row = key_def[3] if n > 3 else row_idx
+                h = key_def[4] if n > 4 else row_height
+                y_off = key_def[5] if n > 5 else 0.0
+                x_advance = key_def[6] if n > 6 else width_u
                 keys.append({
                     "label": label,
                     "row": row_idx,
                     "col": col_idx,
+                    "matrix_row": matrix_row,
                     "x": x,
-                    "y": row_idx * (row_height + gap),
+                    "y": row_idx * (row_height + gap) + y_off,
                     "w": width_u - gap,
-                    "h": row_height,
+                    "h": h,
                 })
-                x += width_u
+                x += x_advance
         return keys
 
     def _update_frame(self, snapshot):
@@ -880,9 +904,11 @@ class KeyboardVisualizer(QWidget):
             w = key["w"] * scale
             h = key["h"] * scale
 
-            # Get color from frame
-            if row < len(self._frame) and col < len(self._frame[row]):
-                r, g, b = self._frame[row][col]
+            # Get color from frame (use matrix_row for keys like ↑ that
+            # are visually in one row but mapped to a different matrix row)
+            mrow = key.get("matrix_row", row)
+            if mrow < len(self._frame) and col < len(self._frame[mrow]):
+                r, g, b = self._frame[mrow][col]
             else:
                 r, g, b = 0, 0, 0
 
@@ -1249,15 +1275,62 @@ class ConfigWindow(QMainWindow):
         event.accept()
 
 
+def _make_app_icon():
+    """Generate a simple Razer-green keyboard icon for the window/taskbar."""
+    from PyQt5.QtGui import QPixmap, QIcon
+    sizes = [16, 32, 48, 64, 128]
+    icon = QIcon()
+    for sz in sizes:
+        pm = QPixmap(sz, sz)
+        pm.fill(QColor(0, 0, 0, 0))
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.Antialiasing)
+        margin = sz * 0.08
+        w, h = sz - 2 * margin, sz - 2 * margin
+        # Keyboard body
+        p.setBrush(QBrush(QColor(20, 20, 20)))
+        p.setPen(QPen(QColor(0, 200, 0), max(1, sz / 24)))
+        cr = sz * 0.12
+        p.drawRoundedRect(int(margin), int(margin + h * 0.1),
+                          int(w), int(h * 0.8), cr, cr)
+        # Key grid (3 rows of small squares)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(0, 180, 0)))
+        key_rows, key_cols = 3, 7
+        area_x = margin + w * 0.12
+        area_y = margin + h * 0.22
+        area_w = w * 0.76
+        area_h = h * 0.56
+        kw = area_w / key_cols * 0.7
+        kh = area_h / key_rows * 0.65
+        for r in range(key_rows):
+            for c in range(key_cols):
+                kx = area_x + c * (area_w / key_cols) + (area_w / key_cols - kw) / 2
+                ky = area_y + r * (area_h / key_rows) + (area_h / key_rows - kh) / 2
+                p.drawRoundedRect(int(kx), int(ky), int(kw), int(kh), 1, 1)
+        p.end()
+        icon.addPixmap(pm)
+    return icon
+
+
 def main():
+    # Set app ID before QApplication so the desktop environment picks it up.
+    # This fixes the taskbar showing "Python 3" as the window title.
+    QApplication.setApplicationName("Razer Lighting")
+    QApplication.setDesktopFileName("razer-lighting")
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     app.setStyleSheet(DARK_STYLESHEET)
+
+    app_icon = _make_app_icon()
+    app.setWindowIcon(app_icon)
 
     # Get initial effect from CLI args
     initial_effect = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else None
 
     window = ConfigWindow(initial_effect)
+    window.setWindowIcon(app_icon)
     window.show()
     sys.exit(app.exec_())
 
