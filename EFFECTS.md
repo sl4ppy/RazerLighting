@@ -204,14 +204,16 @@ A bright dot traces Lissajous curves across the keyboard, leaving a fading green
 
 ![Heat Diffusion](screenshots/heat_diffusion.gif)
 
-A thermal simulation where random hot spots ignite across the keyboard. Heat spreads to neighboring cells via discrete Laplacian diffusion while the entire grid slowly cools. The result is mapped to a hot iron palette that transitions from black through red and orange to yellow and white. Hot spots flare up, spread warmth to their surroundings, and gradually fade as cooling wins out — creating a constantly shifting thermal landscape.
+A thermal simulation where rare ignition events spawn glowing embers that inject heat over several frames. Heat spreads to neighboring cells via discrete Laplacian diffusion (with multiple substeps per frame for smooth propagation) while the entire grid slowly cools. The result is mapped to a hot iron palette that transitions from cool blue through red and orange to yellow and white. You see individual hot spots bloom outward, their heat pools spreading and merging before gradually fading as cooling wins out.
 
-**Palette:** Black → dark red → orange → yellow → white (hot iron).
+**Palette:** Cool blue base → dark red → orange → yellow → white (hot iron).
 
 **Key config parameters:**
 - `DIFFUSION_RATE` — heat spread speed (0.25 = stable diffusion)
+- `SIM_STEPS` — diffusion substeps per frame (smoother spreading)
 - `COOLING` — global cooling per frame
-- `IGNITION_CHANCE` — probability of a cell igniting per frame
+- `IGNITIONS_PER_SEC` — average new hotspot events per second
+- `EMBER_DURATION` — frames each ember burns before extinguishing
 - `IGNITION_HEAT` — temperature of new ignitions
 
 ---
@@ -241,15 +243,19 @@ Molten lava blobs drift on Lissajous paths across the keyboard. Each blob genera
 
 ![Chladni Patterns](screenshots/chladni.gif)
 
-Visualizes the nodal lines of a vibrating plate — the Chladni figures from acoustics. The formula `a·sin(πnx)·sin(πmy) + b·sin(πmx)·sin(πny)` is evaluated across the keyboard, and brightness peaks at the nodal lines where the amplitude passes through zero. The effect crossfades between different mode pairs (n, m) over time, morphing from one geometric pattern to another. A gentle breathing pulse keeps the pattern alive.
+Visualizes the nodal lines of a vibrating plate — the Chladni figures from acoustics. The formula `a·sin(πnx)·sin(πmy) + b·sin(πmx)·sin(πny)` is evaluated with travelling-wave phase offsets so the nodal lines flow and ripple rather than sitting static. Mode pairs crossfade with smoothstep blending, and gradient-based edge glow brightens where the field changes steeply near nodal lines. Chromatic displacement offsets the R and B palette channels along the gradient for a prismatic fringe. A dual-frequency breathing pulse keeps the pattern alive. Rich multi-stop palettes map nodal lines through deep navy to white and anti-nodes through ember to gold.
 
-**Palette:** Dark navy background, bright azure/cyan nodal lines.
+**Palette:** Deep navy → cyan → white (nodal lines), ember → amber → gold (anti-nodes).
 
 **Key config parameters:**
 - `NODAL_WIDTH` — width of the bright nodal lines (Gaussian spread)
 - `MORPH_SPEED` — crossfade speed between mode pairs
+- `WAVE_SPEED` — travelling-wave phase animation speed
 - `PULSE_SPEED` — breathing pulse frequency
+- `EDGE_GLOW` — gradient-based edge brightness boost
+- `CHROMATIC_SPREAD` — R/B channel displacement intensity
 - `MODE_PAIRS` — list of (n, m) mode pairs to cycle through
+- `NODAL_PALETTE` / `ANTINODE_PALETTE` — multi-stop color gradients
 
 ---
 
@@ -259,15 +265,19 @@ Visualizes the nodal lines of a vibrating plate — the Chladni figures from aco
 
 ![Cyclic Cellular Automaton](screenshots/cyclic_cellular.gif)
 
-A grid of cells cycles through 8 states. Each step, a cell advances to the next state if any of its 8 neighbors (Moore neighborhood) already holds that successor state. Starting from random noise, this simple rule produces emergent rotating spirals and traveling waves in a full rainbow palette. The grid wraps toroidally. If the automaton stagnates (no cells change), it automatically re-seeds with fresh random noise.
+A grid of cells cycles through 8 states. Each step, a cell advances to the next state if any of its 8 neighbors (Moore neighborhood) already holds that successor state. Starting from random noise, this simple rule produces emergent rotating spirals and traveling waves. Wavefront glow tracks recently transitioned cells — they flash bright and decay, making spiral arms' leading edges pop dramatically. Edge detection highlights cells on state boundaries with extra brightness, creating neon-outlined spiral structure. Interior cells sit dimmer, giving strong visual depth. If the automaton stagnates, it re-seeds with a bright flash.
 
-**Palette:** 8-color rainbow generated from HSV (one hue per state, evenly spaced).
+**Palette:** 8-color jewel tones (amethyst → indigo → sapphire → aquamarine → emerald → topaz → fire opal → ruby).
 
 **Key config parameters:**
 - `NUM_STATES` — number of states in the cycle (changes palette size)
 - `THRESHOLD` — minimum neighbors required to advance
 - `SIM_STEPS_PER_FRAME` — simulation steps per rendered frame
 - `STAGNATION_FRAMES` — frames without change before re-seed
+- `GLOW_DECAY` — wavefront glow fade rate per frame
+- `GLOW_INTENSITY` — brightness boost for recently transitioned cells
+- `EDGE_BRIGHTNESS` — brightness boost for cells on state boundaries
+- `BASE_BRIGHTNESS` — brightness floor for interior cells
 
 ---
 
@@ -277,15 +287,16 @@ A grid of cells cycles through 8 states. Each step, a cell advances to the next 
 
 ![Magnetic Field Lines](screenshots/magnetic_field.gif)
 
-Four magnetic poles (alternating positive and negative charges) drift across the keyboard on Lissajous paths. At each pixel, the total magnetic field vector is computed from all poles, then visualized as an iron filings pattern: brightness follows `|sin(N·angle)| × magnitude`, creating the characteristic line patterns that reveal field topology. Positive poles glow red and negative poles glow blue. When poles pass close to each other, the field topology snaps dramatically.
+Four magnetic poles (alternating positive and negative charges) drift across the keyboard on Lissajous paths. At each pixel, the total magnetic field vector is computed from all poles, then visualized as animated iron filings: the pattern `|sin(N·angle + potential + flow_phase)|` flows along field lines using the scalar magnetic potential as a spatial phase offset, so filings stream from positive to negative poles. A soft ambient glow proportional to field strength fills in between the filing lines. Poles glow with Gaussian halos. When poles pass close to each other, the field topology snaps dramatically.
 
-**Palette:** Dark background, cyan field lines, red positive pole glow, blue negative pole glow.
+**Palette:** Dark background, green-cyan field lines with polarity tinting, red positive pole glow, blue negative pole glow.
 
 **Key config parameters:**
 - `NUM_POLES` — number of magnetic poles
 - `POLE_SPEED` — drift speed of poles
 - `NUM_LINES` — number of field line bands (controls pattern density)
 - `FIELD_SCALE` — brightness scaling of field magnitude
+- `FLOW_SPEED` — iron filing flow animation speed
 - `POLE_GLOW_RADIUS` / `POLE_GLOW_INTENSITY` — pole proximity glow
 
 ---
@@ -439,9 +450,9 @@ A particle system where hot embers spawn along the bottom edge of the keyboard a
 
 ![Heartbeat Pulse](screenshots/heartbeat.gif)
 
-Simulates a beating heart with physiologically-inspired lub-dub cardiac rhythm. Radial pulse rings expand from a center point — the first beat (lub) is strong, followed by a brief pause, then a weaker second beat (dub). A faint vein network computed from Voronoi edges pulses in the background as waves pass through. BPM slowly oscillates between configurable limits for organic variation. Higher FPS (30) ensures smooth pulse animation.
+Simulates a beating heart with physiologically-inspired lub-dub cardiac rhythm. The S1 (lub) fires a broad, soft pressure wave; the S2 (dub) follows ~0.3 s later with a tighter, sharper ring — matching real cardiac timing. A phase accumulator ensures reliable double-beat timing even as BPM drifts. A systole flush subtly warms the whole keyboard during contraction. A faint vein network computed from Voronoi edges pulses in the background as waves pass through. BPM slowly oscillates between configurable limits for organic variation.
 
-**Palette:** Near-black purple → deep crimson → arterial red → bright red → pink (cardiac gradient).
+**Palette:** Deep plum → crimson → arterial red → bright red → soft pink (cardiac gradient, 8 stops).
 
 **Key config parameters:**
 - `BPM` — beats per minute (base rate)
@@ -449,9 +460,11 @@ Simulates a beating heart with physiologically-inspired lub-dub cardiac rhythm. 
 - `EXPAND_SPEED` — pulse ring expansion speed
 - `RING_WIDTH` — Gaussian width of each pulse ring
 - `LUB_STRENGTH` / `DUB_STRENGTH` — first and second beat amplitude
+- `DUB_PHASE` — when the dub fires within the beat cycle (0.36 ≈ 0.3 s at 72 BPM)
 - `CENTER_ROW` / `CENTER_COL` — pulse origin point
 - `VEIN_BRIGHTNESS` — background vein network intensity
 - `VEIN_PULSE` — how much veins brighten when a wave passes
+- `SYSTOLE_FLUSH` — whole-keyboard warm tint during contraction
 
 ---
 
@@ -526,13 +539,15 @@ Deep space gas clouds with dual-layer fractal noise creating a sense of depth. A
 
 ![Voronoi Shatter](screenshots/voronoi.gif)
 
-Moving seed points create a dynamic Voronoi diagram rendered as stained-glass cells with neon edge glow. Each cell is colored by its seed's slowly rotating HSV hue with distance-based saturation variation. Cell edges are detected where the nearest and second-nearest seed distances converge, creating bright neon outlines. Seeds drift via Brownian motion with boundary reflection. Periodic shatter events split a random seed into two, creating dramatic new fracture lines before merging back.
+Moving seed points create a dynamic Voronoi diagram rendered as stained-glass cells with neon edge glow. Each cell is colored by its seed's slowly rotating HSV hue with distance-based saturation variation. Cell edges are detected where the nearest and second-nearest seed distances converge, creating bright neon outlines. Seeds drift via Brownian motion with soft mutual repulsion that keeps them spread across the keyboard. Periodic shatter events split a random seed into two, creating dramatic new fracture lines before merging back.
 
-**Palette:** Per-cell HSV hues (full spectrum) with configurable neon edge glow (default cyan).
+**Palette:** Per-cell HSV hues (evenly spaced) with configurable neon edge glow (default cyan).
 
 **Key config parameters:**
 - `NUM_SEEDS` — number of Voronoi seed points
-- `SEED_SPEED` — base seed movement speed
+- `SEED_SPEED` — maximum seed movement speed
+- `SEED_JITTER` — Brownian motion jitter per frame
+- `SEED_REPULSION` — soft repulsion force between seeds (prevents clumping)
 - `HUE_SPEED` — per-frame hue rotation (degrees)
 - `EDGE_WIDTH` — edge detection threshold (lower = thinner edges)
 - `EDGE_COLOR` — neon edge glow color

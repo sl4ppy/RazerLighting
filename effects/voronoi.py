@@ -60,17 +60,17 @@ def run(device, stop_event):
     row_grid, col_grid = make_coordinate_grids(rows, cols)
 
     cfg = load_config(CONFIG_PATH)
-    num_seeds = cfg.get("NUM_SEEDS", 10)
+    num_seeds = cfg.get("NUM_SEEDS", 6)
 
     # Initialize seeds
     sx = np.random.uniform(0, cols - 1, num_seeds).astype(np.float64)
     sy = np.random.uniform(0, rows - 1, num_seeds).astype(np.float64)
-    svx = np.random.uniform(-0.03, 0.03, num_seeds)
-    svy = np.random.uniform(-0.03, 0.03, num_seeds)
-    shue = np.random.uniform(0, 360, num_seeds)  # per-seed hue
+    svx = np.random.uniform(-0.1, 0.1, num_seeds)
+    svy = np.random.uniform(-0.1, 0.1, num_seeds)
+    shue = np.linspace(0, 300, num_seeds)  # spread hues evenly
 
     # Shatter state
-    shatter_countdown = random.randint(200, 400)
+    shatter_countdown = random.randint(100, 200)
     shatter_active = False
     shatter_timer = 0
     extra_seed_idx = -1
@@ -82,26 +82,47 @@ def run(device, stop_event):
         cfg = load_config(CONFIG_PATH)
         fps = cfg.get("FPS", 20)
         interval = 1.0 / fps
-        seed_speed = cfg.get("SEED_SPEED", 0.02)
-        seed_jitter = cfg.get("SEED_JITTER", 0.005)
+        seed_speed = cfg.get("SEED_SPEED", 0.15)
+        seed_jitter = cfg.get("SEED_JITTER", 0.03)
+        seed_repulsion = cfg.get("SEED_REPULSION", 0.01)
         hue_speed = cfg.get("HUE_SPEED", 0.3)
-        edge_width = cfg.get("EDGE_WIDTH", 1.2)
+        edge_width = cfg.get("EDGE_WIDTH", 1.0)
         edge_color = cfg.get("EDGE_COLOR", (0, 255, 200))
         edge_bright = cfg.get("EDGE_BRIGHTNESS", 0.9)
         cell_bright = cfg.get("CELL_BRIGHTNESS", 0.6)
         aspect = cfg.get("ASPECT_RATIO", 2.2)
-        shatter_dur = cfg.get("SHATTER_DURATION", 60)
-        shatter_min = cfg.get("SHATTER_INTERVAL_MIN", 200)
-        shatter_max = cfg.get("SHATTER_INTERVAL_MAX", 400)
+        shatter_dur = cfg.get("SHATTER_DURATION", 50)
+        shatter_min = cfg.get("SHATTER_INTERVAL_MIN", 100)
+        shatter_max = cfg.get("SHATTER_INTERVAL_MAX", 250)
 
         n = len(sx)
 
-        # Update seed positions (brownian motion + boundary bounce)
+        # Brownian jitter
         svx += np.random.uniform(-seed_jitter, seed_jitter, n)
         svy += np.random.uniform(-seed_jitter, seed_jitter, n)
-        # Dampen velocity slightly to prevent runaway
-        svx *= 0.98
-        svy *= 0.98
+
+        # Soft repulsion between seeds (prevents clumping)
+        for i in range(n):
+            for j in range(i + 1, n):
+                dx = sx[i] - sx[j]
+                dy = sy[i] - sy[j]
+                d2 = dx * dx + dy * dy + 0.1
+                force = seed_repulsion / d2
+                svx[i] += dx * force
+                svy[i] += dy * force
+                svx[j] -= dx * force
+                svy[j] -= dy * force
+
+        # Clamp speed and apply damping
+        speed = np.sqrt(svx * svx + svy * svy)
+        max_spd = seed_speed
+        too_fast = speed > max_spd
+        if np.any(too_fast):
+            scale = np.where(too_fast, max_spd / (speed + 1e-9), 1.0)
+            svx *= scale
+            svy *= scale
+        svx *= 0.95
+        svy *= 0.95
         sx += svx
         sy += svy
 

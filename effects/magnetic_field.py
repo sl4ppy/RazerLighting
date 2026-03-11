@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Magnetic Field Lines - iron filings visualization of drifting magnetic poles.
 
-Four magnetic poles (positive and negative) drift across the keyboard
-on Lissajous paths. The field is visualized as iron filing patterns:
-bright lines aligned with the local field direction, with red glow
-near positive poles and blue glow near negative poles.
+Magnetic poles drift across the keyboard on Lissajous paths.  Iron filing
+patterns flow along field lines with speed proportional to local field
+strength.  Pole glow and polarity-tinted coloring show field structure.
 
 Edit magnetic_field_config.py while running to tweak on the fly.
 """
@@ -30,7 +29,6 @@ def run(device, stop_event):
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
 
-    # Coordinate grids
     row_grid, col_grid = make_coordinate_grids(rows, cols)
 
     t = 0.0
@@ -62,11 +60,12 @@ def run(device, stop_event):
         fps = cfg.get("FPS", 20)
         interval = 1.0 / fps
         num_poles = cfg.get("NUM_POLES", 4)
-        pole_speed = cfg.get("POLE_SPEED", 0.006)
+        pole_speed = cfg.get("POLE_SPEED", 0.05)
         pole_glow_radius = cfg.get("POLE_GLOW_RADIUS", 2.5)
         pole_glow_intensity = cfg.get("POLE_GLOW_INTENSITY", 0.6)
-        num_lines = cfg.get("NUM_LINES", 6)
+        num_lines = cfg.get("NUM_LINES", 3)
         field_scale = cfg.get("FIELD_SCALE", 0.3)
+        flow_speed = cfg.get("FLOW_SPEED", 1.5)
         line_color = cfg.get("LINE_COLOR", (0, 200, 220))
         pos_pole_color = cfg.get("POS_POLE_COLOR", (255, 40, 40))
         neg_pole_color = cfg.get("NEG_POLE_COLOR", (40, 40, 255))
@@ -87,13 +86,13 @@ def run(device, stop_event):
                 "py": random.uniform(0, 2 * math.pi),
             })
 
-        epsilon = 0.1
+        epsilon = 0.3
 
-        # Accumulate field vectors across all poles (vectorized over grid)
+        # Accumulate field vectors and scalar potential
         field_x = np.zeros((rows, cols), dtype=np.float64)
         field_y = np.zeros((rows, cols), dtype=np.float64)
+        potential = np.zeros((rows, cols), dtype=np.float64)
 
-        # Compute current pole positions and accumulate field
         pole_positions = []
         for i in range(num_poles):
             p = poles[i]
@@ -110,32 +109,40 @@ def run(device, stop_event):
             strength = charge / (dist * dist)
             field_x += strength * dx / dist
             field_y += strength * dy / dist
+            potential += charge / dist
 
-        # Iron filings visualization (vectorized)
+        # Field magnitude and angle
         field_mag = np.sqrt(field_x * field_x + field_y * field_y)
         angle = np.arctan2(field_y, field_x)
-        magnitude_factor = np.minimum(1.0, field_mag * field_scale)
-        brightness = np.abs(np.sin(num_lines * angle)) * magnitude_factor
 
-        # Compute local field polarity bias for aurora coloring
-        # Positive = warm (toward pos_pole_color), Negative = cool (toward neg_pole_color)
+        # Magnitude factor with sqrt for more dynamic range
+        magnitude_factor = np.sqrt(np.minimum(1.0, field_mag * field_scale))
+
+        # Animated iron filings: phase flows along field lines
+        # Use potential as spatial phase offset so flow varies with field structure
+        flow_phase = t * flow_speed
+        filing_pattern = np.abs(np.sin(num_lines * angle + potential * 2.0 + flow_phase))
+        brightness = filing_pattern * magnitude_factor
+
+        # Add a soft ambient field glow (visible even between filing lines)
+        ambient = magnitude_factor * 0.15
+        brightness = np.clip(brightness + ambient, 0.0, 1.0)
+
+        # Polarity coloring
         polarity = np.zeros((rows, cols), dtype=np.float64)
         for px_pos, py_pos, charge in pole_positions:
             dx = col_grid - px_pos
             dy = row_grid - py_pos
             dist = np.sqrt(dx * dx + dy * dy) + epsilon
             polarity += charge / (dist + 1.0)
-        # Normalize polarity to [-1, 1]
         pol_max = max(np.abs(polarity).max(), 0.01)
         polarity = np.clip(polarity / pol_max, -1.0, 1.0)
 
-        # Blend line color based on polarity: positive -> warm tint, negative -> cool tint
         bg_arr = np.array(bg, dtype=np.float64)
         line_arr = np.array(line_color, dtype=np.float64)
         pos_tint = np.array(pos_pole_color, dtype=np.float64) * 0.4 + line_arr * 0.6
         neg_tint = np.array(neg_pole_color, dtype=np.float64) * 0.4 + line_arr * 0.6
 
-        # Lerp line color by polarity: neg_tint at -1, line_color at 0, pos_tint at +1
         pos_blend = np.maximum(polarity, 0.0)[:, :, np.newaxis]
         neg_blend = np.maximum(-polarity, 0.0)[:, :, np.newaxis]
         local_line = (
@@ -144,26 +151,23 @@ def run(device, stop_event):
             + neg_tint[np.newaxis, np.newaxis, :] * neg_blend
         )
 
-        # Base color from field lines
         frame = (
             bg_arr[np.newaxis, np.newaxis, :]
             + (local_line - bg_arr[np.newaxis, np.newaxis, :]) * brightness[:, :, np.newaxis]
         )
 
-        # Add pole glow (additive, vectorized per pole)
+        # Pole glow (Gaussian falloff)
         pos_arr = np.array(pos_pole_color, dtype=np.float64)
         neg_arr = np.array(neg_pole_color, dtype=np.float64)
+        r_sq = pole_glow_radius * pole_glow_radius
         for px_pos, py_pos, charge in pole_positions:
             dx = col_grid - px_pos
             dy = row_grid - py_pos
-            dist = np.sqrt(dx * dx + dy * dy)
-            mask = dist < pole_glow_radius
-            glow = np.where(mask, (1.0 - dist / pole_glow_radius) * pole_glow_intensity, 0.0)
+            dist_sq = dx * dx + dy * dy
+            glow = np.exp(-dist_sq / r_sq) * pole_glow_intensity
             glow_color = pos_arr if charge > 0 else neg_arr
-            for ch in range(3):
-                frame[:, :, ch] += glow * glow_color[ch]
+            frame += glow[:, :, np.newaxis] * glow_color[np.newaxis, np.newaxis, :]
 
-        # Clamp to 0-255 and convert to uint8
         frame_rgb = np.clip(frame, 0, 255).astype(np.uint8)
 
         draw_frame(device, frame_rgb)

@@ -2,11 +2,15 @@ FPS = 20
 
 # Simulation
 DIFFUSION_RATE = 0.25
-COOLING = 0.008
-IGNITION_CHANCE = 0.08
-IGNITION_HEAT = 1.0
+SIM_STEPS = 3
+COOLING = 0.01
 
-# Palette — enhanced hot iron with cool blue base
+# Ignition: average new hotspots per second (not per cell!)
+IGNITIONS_PER_SEC = 4.0
+EMBER_DURATION = 12
+IGNITION_HEAT = 1.2
+
+# Palette — hot iron with cool blue base
 PALETTE = [
     (0, 0, 20),
     (0, 0, 60),

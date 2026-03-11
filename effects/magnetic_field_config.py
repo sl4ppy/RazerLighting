@@ -2,13 +2,14 @@ FPS = 20
 
 # Poles
 NUM_POLES = 4
-POLE_SPEED = 0.006
+POLE_SPEED = 0.05
 POLE_GLOW_RADIUS = 2.5
 POLE_GLOW_INTENSITY = 0.7
 
 # Field visualization
-NUM_LINES = 6
+NUM_LINES = 3
 FIELD_SCALE = 0.4
+FLOW_SPEED = 1.5
 
 # Colors — aurora inspired
 LINE_COLOR = (0, 255, 140)

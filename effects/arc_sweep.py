@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Arc Sweep - arcs of light sweeping across the keyboard from random directions.
+"""Arc Sweep — luminous curved wavefronts sweep across the keyboard.
 
-Multiple arcs can be alive simultaneously, overlapping and crossing.
+Arcs expand from off-screen focal points, creating gently curved
+shockwave-like sweeps.  Optional domain warping distorts wavefronts
+organically, and chromatic edge-splitting adds prismatic fringe.
+
 Edit arc_sweep_config.py while running to tweak on the fly.
 """
 
@@ -10,131 +13,169 @@ import os
 import random
 import time
 
-from effects.common import load_config, clear_keyboard, frame_sleep, standalone_main
+import numpy as np
+
+from effects.common import (
+    load_config, draw_frame, clear_keyboard, frame_sleep,
+    make_coordinate_grids, standalone_main,
+)
 
 EFFECT_NAME = "Arc Sweep"
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arc_sweep_config.py")
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "arc_sweep_config.py")
+
+# --- Value noise for domain warping ---
+
+_perm = np.arange(256, dtype=np.int32)
+np.random.RandomState(7).shuffle(_perm)
+_perm = np.tile(_perm, 2)
 
 
-def build_trail(full_trail, speed, speed_min, speed_max):
-    """Scale trail length by speed -- faster = longer trail."""
-    if not full_trail:
-        return []
-    speed_t = (speed - speed_min) / (speed_max - speed_min) if speed_max > speed_min else 1.0
-    trail_len = max(1, round(len(full_trail) * speed_t))
-    if trail_len >= len(full_trail):
-        return list(full_trail)
-    trail = []
-    for i in range(trail_len):
-        t = i / (trail_len - 1) * (len(full_trail) - 1) if trail_len > 1 else 0
-        idx = min(int(t), len(full_trail) - 2)
-        frac = t - idx
-        c1, c2 = full_trail[idx], full_trail[idx + 1]
-        trail.append((
-            int(c1[0] + (c2[0] - c1[0]) * frac),
-            int(c1[1] + (c2[1] - c1[1]) * frac),
-            int(c1[2] + (c2[2] - c1[2]) * frac),
-        ))
-    return trail
+def _fade(t):
+    return t * t * t * (t * (t * 6 - 15) + 10)
+
+
+def _noise2d(x, y):
+    """Vectorized 2D value noise, returns [0, 1]."""
+    xi = np.floor(x).astype(np.int32) & 255
+    yi = np.floor(y).astype(np.int32) & 255
+    xf = x - np.floor(x)
+    yf = y - np.floor(y)
+    u, v = _fade(xf), _fade(yf)
+    aa = _perm[_perm[xi] + yi] / 255.0
+    ab = _perm[_perm[xi] + yi + 1] / 255.0
+    ba = _perm[_perm[xi + 1] + yi] / 255.0
+    bb = _perm[_perm[xi + 1] + yi + 1] / 255.0
+    x1 = aa + u * (ba - aa)
+    x2 = ab + u * (bb - ab)
+    return x1 + v * (x2 - x1)
 
 
 def spawn_arc(cfg, rows, cols):
-    """Create a new arc with random direction and speed."""
-    speed_min = cfg.get("SPEED_MIN", 0.4)
-    speed_max = cfg.get("SPEED_MAX", 4.0)
-    speed = speed_min + (speed_max - speed_min) * random.random() ** 2
+    """Create a new arc expanding from a random off-screen focal point."""
+    speed_min = cfg.get("SPEED_MIN", 4.0)
+    speed_max = cfg.get("SPEED_MAX", 10.0)
+    speed = speed_min + (speed_max - speed_min) * random.random()
 
-    angle = random.uniform(0, 360)
-    angle_rad = math.radians(angle)
-    nx = math.cos(angle_rad)
-    ny = math.sin(angle_rad)
+    angle = random.uniform(0, 2 * math.pi)
+    focal_dist = cfg.get("FOCAL_DISTANCE", 15.0)
+    aspect = cfg.get("ASPECT_RATIO", 2.5)
+    cx, cy = cols / 2.0, rows * aspect / 2.0
 
-    trail = build_trail(cfg.get("TRAIL", []), speed, speed_min, speed_max)
+    fx = cx - math.cos(angle) * focal_dist
+    fy = cy - math.sin(angle) * focal_dist
 
-    projections = [nx * c + ny * r
-                   for c in (0, cols - 1)
-                   for r in (0, rows - 1)]
+    corners = [(0, 0), (cols - 1, 0),
+               (0, (rows - 1) * aspect), (cols - 1, (rows - 1) * aspect)]
+    dists = [math.hypot(x - fx, y - fy) for x, y in corners]
+
+    colors = cfg.get("COLORS", [
+        (100, 180, 255), (200, 60, 255), (255, 40, 120), (60, 255, 200),
+    ])
+    color = random.choice(colors) if colors else (100, 180, 255)
+
+    # Width scales with speed: slow arcs are thin and crisp, fast ones wider
+    base_width = cfg.get("ARC_WIDTH", 1.0)
+    speed_t = (speed - speed_min) / (speed_max - speed_min) if speed_max > speed_min else 0.5
+    width = max(base_width * (0.5 + speed_t * 0.8), 0.3)
 
     return {
-        "nx": nx,
-        "ny": ny,
+        "fx": fx, "fy": fy,
         "speed": speed,
-        "pos": min(projections) - 2,
-        "p_max": max(projections) + 2 + len(trail),
-        "trail": trail,
-        "center_color": cfg.get("CENTER_COLOR", (0, 255, 0)),
-        "edge_color": cfg.get("EDGE_COLOR", (136, 0, 102)),
-        "row_offsets": cfg.get("ROW_OFFSETS", [0.5, 0, 0, 0, 0, 0]),
+        "radius": min(dists) - width * 2,
+        "r_max": max(dists) + width * 3,
+        "width": width,
+        "color": np.array(color, dtype=np.float64),
+        "noise_seed": random.uniform(0, 100),
     }
 
 
 def run(device, stop_event):
-    """Run the arc sweep effect. Returns when stop_event is set."""
     rows = device.fx.advanced.rows
     cols = device.fx.advanced.cols
-    matrix = device.fx.advanced.matrix
-    BLACK = (0, 0, 0)
+    row_grid, col_grid = make_coordinate_grids(rows, cols)
 
+    afterglow = np.zeros((rows, cols, 3), dtype=np.float64)
     arcs = []
     next_spawn = time.monotonic()
-
+    t = 0.0
     next_frame = time.monotonic()
 
     while not stop_event.is_set():
         cfg = load_config(CONFIG_PATH)
-        fps = cfg.get("FPS", 20)
+        fps = cfg.get("FPS", 30)
         interval = 1.0 / fps
-        now = time.monotonic()
+        max_arcs = cfg.get("MAX_ARCS", 5)
 
-        if now >= next_spawn:
+        if time.monotonic() >= next_spawn and len(arcs) < max_arcs:
             arcs.append(spawn_arc(cfg, rows, cols))
-            pause = random.uniform(cfg.get("PAUSE_MIN", 0.5), cfg.get("PAUSE_MAX", 4.0))
-            next_spawn = now + pause
+            next_spawn = time.monotonic() + random.uniform(
+                cfg.get("PAUSE_MIN", 0.3), cfg.get("PAUSE_MAX", 2.0))
 
-        frame = [[BLACK] * cols for _ in range(rows)]
+        aspect = cfg.get("ASPECT_RATIO", 2.5)
+        warp_str = cfg.get("WARP_STRENGTH", 0.5)
+        warp_scl = cfg.get("WARP_SCALE", 0.25)
+        chroma = cfg.get("CHROMATIC_OFFSET", 0.15)
+        glow_decay = cfg.get("AFTERGLOW_DECAY", 0.88)
+        glow_dep = cfg.get("AFTERGLOW_DEPOSIT", 0.25)
+        trail_c = np.array(cfg.get("TRAIL_COLOR", (40, 0, 80)),
+                           dtype=np.float64)
+        bg = np.array(cfg.get("BG_COLOR", (2, 0, 8)), dtype=np.float64)
+
+        row_scaled = row_grid * aspect
+        afterglow *= glow_decay
+
+        frame = np.full((rows, cols, 3), bg, dtype=np.float64)
+        frame += afterglow
+
+        # Per-channel chromatic radius offsets: blue leads, red trails
+        ch_offsets = [chroma, 0.0, -chroma]
 
         for arc in arcs:
-            nx, ny = arc["nx"], arc["ny"]
-            pos = arc["pos"]
-            trail = arc["trail"]
-            center_color = arc["center_color"]
-            edge_color = arc["edge_color"]
-            offsets = arc["row_offsets"]
+            dx = col_grid - arc["fx"]
+            dy = row_scaled - arc["fy"]
+            dist = np.sqrt(dx * dx + dy * dy)
 
-            for r in range(rows):
-                offset = offsets[r] if r < len(offsets) else 0.0
-                for c in range(cols):
-                    d = round(pos - (nx * c + ny * r + offset))
-                    if abs(d) == 0:
-                        color = center_color
-                    elif abs(d) == 1:
-                        color = edge_color
-                    elif d >= 2 and (d - 2) < len(trail):
-                        color = trail[d - 2]
-                    else:
-                        continue
-                    existing = frame[r][c]
-                    frame[r][c] = (
-                        max(existing[0], color[0]),
-                        max(existing[1], color[1]),
-                        max(existing[2], color[2]),
-                    )
+            # Domain warp for organic wavefront distortion
+            if warp_str > 0:
+                warp = (_noise2d(
+                    col_grid * warp_scl + arc["noise_seed"],
+                    row_grid * warp_scl + t * 0.012
+                ) - 0.5) * 2.0 * warp_str
+                dist_w = dist + warp
+            else:
+                dist_w = dist
 
-        for r in range(rows):
-            for c in range(cols):
-                matrix[r, c] = frame[r][c]
-        device.fx.advanced.draw()
+            w = arc["width"]
+            for ch in range(3):
+                delta = dist_w - (arc["radius"] + ch_offsets[ch])
+
+                # Asymmetric profile: sharp leading edge, moderate trail
+                sigma = np.where(delta > 0, w * 0.3, w * 0.8)
+                bright = np.exp(-delta * delta / (2.0 * sigma * sigma))
+
+                # Trail color blend (smoothstep from arc color → trail color)
+                tr = np.clip(-delta / (w * 2.0), 0.0, 1.0)
+                tr = tr * tr * (3 - 2 * tr)
+                color_val = arc["color"][ch] * (1 - tr) + trail_c[ch] * tr
+
+                contrib = bright * color_val
+                frame[:, :, ch] += contrib
+                afterglow[:, :, ch] = np.maximum(
+                    afterglow[:, :, ch], contrib * glow_dep)
+
+        draw_frame(device, np.clip(frame, 0, 255).astype(np.uint8))
 
         next_frame, dt = frame_sleep(next_frame, interval)
+        t += dt * fps
         for arc in arcs:
-            arc["pos"] += arc["speed"] * dt * fps
-        arcs = [a for a in arcs if a["pos"] < a["p_max"]]
+            arc["radius"] += arc["speed"] * dt
+        arcs = [a for a in arcs if a["radius"] < a["r_max"]]
 
     clear_keyboard(device)
 
 
 def main():
-    """Standalone entry point."""
     standalone_main(EFFECT_NAME, run)
 
 

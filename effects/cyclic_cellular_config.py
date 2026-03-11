@@ -8,6 +8,16 @@ SIM_STEPS_PER_FRAME = 1
 # Stagnation detection
 STAGNATION_FRAMES = 60
 
+# Wavefront glow (cells flash bright on transition, then decay)
+GLOW_DECAY = 0.78
+GLOW_INTENSITY = 0.6
+
+# Edge brightness boost for cells on state boundaries
+EDGE_BRIGHTNESS = 0.35
+
+# Base brightness for interior (non-edge, non-glowing) cells
+BASE_BRIGHTNESS = 0.35
+
 # Jewel-tone palette — one color per state (interpolated if fewer than NUM_STATES)
 # Set to empty list [] for classic HSV rainbow
 PALETTE = [

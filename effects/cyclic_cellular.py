@@ -6,6 +6,10 @@ advances to the next state if enough Moore-neighbourhood neighbours
 already hold that next state, producing emergent rotating spirals and
 travelling waves across the keyboard.
 
+Wavefront glow highlights recently transitioned cells, edge detection
+brightens state boundaries, and a base dimming creates visual depth
+so spiral arms pop dramatically against quieter interiors.
+
 Edit cyclic_cellular_config.py while running to tweak on the fly.
 """
 
@@ -94,6 +98,18 @@ def step_grid(grid, rows, cols, num_states, threshold):
     return new_grid, changed
 
 
+def _edge_map(grid):
+    """Fraction of Moore neighbours in a different state (0..1)."""
+    diff = np.zeros(grid.shape, dtype=np.float64)
+    for dr in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            if dr == 0 and dc == 0:
+                continue
+            nb = np.roll(np.roll(grid, -dr, axis=0), -dc, axis=1)
+            diff += (nb != grid).astype(np.float64)
+    return diff * 0.125  # /8
+
+
 def run(device, stop_event):
     """Run the cyclic cellular automaton effect."""
     rows = device.fx.advanced.rows
@@ -107,6 +123,9 @@ def run(device, stop_event):
     palette_array = np.array(palette, dtype=np.uint8)
     stagnant_frames = 0
 
+    # Wavefront glow buffer (0..1, spikes on transition, decays each frame)
+    glow = np.ones((rows, cols), dtype=np.float64)
+
     next_frame = time.monotonic()
 
     while not stop_event.is_set():
@@ -117,6 +136,10 @@ def run(device, stop_event):
         threshold = cfg.get("THRESHOLD", 1)
         sim_steps = cfg.get("SIM_STEPS_PER_FRAME", 1)
         stagnation_limit = cfg.get("STAGNATION_FRAMES", 60)
+        glow_decay = cfg.get("GLOW_DECAY", 0.78)
+        glow_intensity = cfg.get("GLOW_INTENSITY", 0.6)
+        edge_brightness = cfg.get("EDGE_BRIGHTNESS", 0.35)
+        base_brightness = cfg.get("BASE_BRIGHTNESS", 0.35)
 
         new_custom_palette = cfg.get("PALETTE", [])
         # Rebuild palette / reseed if NUM_STATES or palette changed
@@ -126,13 +149,20 @@ def run(device, stop_event):
             palette = build_palette(num_states, custom_palette)
             palette_array = np.array(palette, dtype=np.uint8)
             grid = seed_grid(rows, cols, num_states)
+            glow[:] = 1.0
             stagnant_frames = 0
 
-        # Simulation steps
+        # Simulation steps (track which cells changed)
+        old_grid = grid.copy()
         total_changed = 0
         for _ in range(sim_steps):
             grid, changed = step_grid(grid, rows, cols, num_states, threshold)
             total_changed += changed
+
+        # Wavefront glow: spike on transition, decay each frame
+        changed_mask = grid != old_grid
+        glow[changed_mask] = 1.0
+        glow *= glow_decay
 
         # Stagnation detection
         if total_changed == 0:
@@ -142,10 +172,20 @@ def run(device, stop_event):
 
         if stagnant_frames >= stagnation_limit:
             grid = seed_grid(rows, cols, num_states)
+            glow[:] = 1.0
             stagnant_frames = 0
 
-        # Render
-        frame_rgb = palette_array[grid]
+        # Edge detection: cells on state boundaries are brighter
+        edges = _edge_map(grid)
+
+        # Composite brightness: base + wavefront glow + edge highlight
+        brightness = base_brightness + glow * glow_intensity + edges * edge_brightness
+        brightness = np.clip(brightness, 0.0, 1.0)
+
+        # Apply brightness to palette colors
+        base_rgb = palette_array[grid].astype(np.float64)
+        frame_rgb = (base_rgb * brightness[:, :, np.newaxis]).astype(np.uint8)
+
         draw_frame(device, frame_rgb)
 
         next_frame, _dt = frame_sleep(next_frame, interval)
