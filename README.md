@@ -1,6 +1,10 @@
 # Razer Lighting
 
-Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRazer](https://openrazer.github.io/). A system tray app with **27 procedural effects** that never repeat — no Polychromatic needed.
+Per-key RGB control for Razer laptop keyboards on Linux — 28 procedural effects that never repeat.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![OpenRazer](https://img.shields.io/badge/Driver-OpenRazer-brightgreen.svg)](https://openrazer.github.io/)
 
 ![Plasma effect](screenshots/plasma.gif)
 
@@ -9,37 +13,54 @@ Custom keyboard lighting effects for Razer laptops on Linux, powered by [OpenRaz
   <img src="screenshots/arc_sweep.gif" width="49%" />
 </p>
 
-> Every effect is procedurally generated and runs indefinitely. See all 27 with animated previews in the **[Effects Guide](EFFECTS.md)**.
+> Every effect is procedurally generated and runs indefinitely. See all 28 with animated previews in the **[Effects Guide](EFFECTS.md)**.
 
 ## Features
 
-- **27 procedural effects** — from physics simulations to demoscene classics, each infinitely unique
-- **Plain Python scripts** — every effect is a simple `.py` file; easy to read, modify, and create your own
+- **28 procedural effects** — physics simulations, cellular automata, demoscene classics, and more, each infinitely unique
+- **Plain Python scripts** — every effect is a standalone `.py` file; easy to read, modify, and create your own
 - **Live configuration GUI** — tune every parameter with sliders, color pickers, and a real-time keyboard preview
 - **Hot-reloadable configs** — edit `_config.py` files while effects run; changes apply instantly
 - **System tray integration** — select effects, randomize, toggle autostart, all from the tray icon
 - **Auto-discovery** — drop a new `.py` file in `effects/` and it appears in the menu automatically
-- **Write your own** — see the **[Creating Effects Guide](CREATING_EFFECTS.md)** to build custom effects
+- **GIF capture** — record any effect as an animated GIF for sharing or documentation
 
-## Getting Started
-
-### Requirements
-
-- Linux with [OpenRazer](https://openrazer.github.io/) daemon installed
-- Razer keyboard or laptop with per-key RGB (matrix) support
-- Python 3.10+
-
-### Install & Run
+## Quick Start
 
 ```bash
 git clone https://github.com/sl4ppy/RazerLighting.git
 cd RazerLighting
 python3 -m venv --system-site-packages .venv
-.venv/bin/pip install pystray Pillow
+.venv/bin/pip install pystray Pillow PyQt5 numpy
 .venv/bin/python3 razer_lighting.py
 ```
 
-The `--system-site-packages` flag is required for access to the system-installed `openrazer` and GTK libraries.
+A green circle appears in your system tray. Right-click it to select an effect. Your keyboard lights up immediately.
+
+> **Requires:** Linux with [OpenRazer](https://openrazer.github.io/) installed, a Razer keyboard with per-key RGB support, and Python 3.10+.
+
+## Hardware Compatibility
+
+| Hardware | Support |
+|---|---|
+| Razer Blade 14 (2021+) | Tested, full per-key RGB |
+| Other Razer laptops with per-key RGB | Should work (matrix dimensions auto-detected) |
+| Razer external keyboards with per-key RGB | Should work via OpenRazer |
+| Non-Razer keyboards | Not supported |
+
+The keyboard matrix is auto-detected from OpenRazer. The configuration GUI keyboard layout is modeled on the Razer Blade 14 (6 rows × 16 columns) but effects render to whatever matrix size your device reports.
+
+## Documentation
+
+| Guide | Description |
+|---|---|
+| [Getting Started](docs/getting-started.md) | Installation, driver setup, and key concepts |
+| [User Reference](docs/user-reference.md) | Complete feature and configuration reference |
+| [Tutorials](docs/tutorials/index.md) | Step-by-step guides for effects and custom animations |
+| [Troubleshooting & FAQ](docs/troubleshooting.md) | Common issues and how to fix them |
+| [Glossary](docs/glossary.md) | RGB, LED, and tool-specific terminology |
+| [Effects Guide](EFFECTS.md) | All 28 effects with animated previews and config parameters |
+| [Creating Effects](CREATING_EFFECTS.md) | Developer guide for writing custom effects |
 
 ## Configuration
 
@@ -47,29 +68,26 @@ Open **Configure...** from the tray menu to launch the configuration window:
 
 ![Configuration window](screenshots/wave_interference.gif)
 
-- **Effect selector** — switch between all 27 effects from the dropdown
+- **Effect selector** — switch between all effects from the dropdown
 - **Auto-generated controls** — sliders, spinboxes, color pickers, palette editors, and checkboxes inferred from each effect's config
 - **Live keyboard preview** — realistic Razer Blade layout renders the effect in real time as you tweak
-- **Tooltips** — hover over any parameter for a description of what it does
+- **Tooltips** — hover over any parameter for a description
 - **Save / Revert / Defaults** — changes only affect the preview until you Save
-
-Effects can also be run standalone: `.venv/bin/python3 effects/arc_sweep.py`
 
 ## Adding Effects
 
-Every effect is a plain Python script — no framework, no boilerplate. Drop a `.py` file in `effects/` with an `EFFECT_NAME` string and a `run(device, stop_event)` function, and it appears in the tray menu automatically.
+Every effect is a plain Python script. Drop a `.py` file in `effects/` with an `EFFECT_NAME` string and a `run(device, stop_event)` function, and it appears in the tray menu automatically.
 
 ```python
 EFFECT_NAME = "My Effect"
 
 def run(device, stop_event):
     while not stop_event.is_set():
-        # Set colors and draw
         device.fx.advanced.matrix[0, 0] = (255, 0, 0)
         device.fx.advanced.draw()
 ```
 
-See the **[Creating Effects Guide](CREATING_EFFECTS.md)** for a complete walkthrough with examples, shared utilities, config files, and tips.
+See the **[Creating Effects Guide](CREATING_EFFECTS.md)** for the full walkthrough.
 
 ## Project Structure
 
@@ -79,11 +97,17 @@ config_window.py             PyQt5 configuration GUI with live preview
 config_parser.py             AST-based config file parsing & writing
 virtual_device.py            Virtual device for preview rendering
 device.py                    OpenRazer device connection with retry
+capture_gif.py               Animated GIF capture tool
 effects/
-  ├── arc_sweep.py           Effect module (27 total)
+  ├── common.py              Shared utilities (palette, timing, grid math)
+  ├── arc_sweep.py           Effect module (28 total)
   ├── arc_sweep_config.py    Hot-reloadable config
   └── ...
 ```
+
+## Contributing
+
+Contributions are welcome. To add a new effect, see the [Creating Effects Guide](CREATING_EFFECTS.md). For bug reports and feature requests, open an issue on GitHub.
 
 ## Support
 
