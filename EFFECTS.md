@@ -1,6 +1,6 @@
 # Effects Guide
 
-Detailed descriptions of all 27 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
+Detailed descriptions of all 28 procedural lighting effects. Every effect runs indefinitely, never repeating the same pattern twice. Each has a companion `_config.py` file that can be edited while the effect is running for instant hot-reload.
 
 All parameters listed below can also be tuned visually using the **Configure...** window from the system tray menu, which provides sliders, color pickers, and a live keyboard preview.
 
@@ -8,18 +8,23 @@ All parameters listed below can also be tuned visually using the **Configure...*
 
 ## Arc Sweep
 
-**File:** `effects/arc_sweep.py` | **FPS:** 20
+**File:** `effects/arc_sweep.py` | **FPS:** 24
 
 ![Arc Sweep](screenshots/arc_sweep.gif)
 
-Arcs of light sweep across the keyboard from random directions. Each arc has a bright green center that fades to dark magenta at the edges, followed by a teal trail that dims as it passes. Multiple arcs can overlap, creating layered washes of color. The speed and pause between sweeps are randomized, and per-row column offsets give the wavefront a curved shape.
+Luminous curved wavefronts sweep across the keyboard from random off-screen focal points, creating gently curved shockwave-like sweeps. Each arc has an asymmetric profile — sharp leading edge, broad trailing fade — with speed-dependent width (slow arcs thin, fast arcs widen). Domain warping via value noise distorts wavefronts organically, and chromatic edge-splitting adds prismatic fringe where blue leads and red trails. Multiple arcs can overlap, and an optional afterglow leaves warmth in their wake.
 
-**Palette:** Bright green center, dark magenta edges, teal trailing fade.
+**Palette:** Green center with purple trail fade, prismatic chromatic fringe, dark purple background.
 
 **Key config parameters:**
 - `SPEED_MIN` / `SPEED_MAX` — sweep speed range
-- `PAUSE_MIN` / `PAUSE_MAX` — delay between sweeps
-- `ROW_OFFSETS` — per-row offsets that shape the arc curvature
+- `PAUSE_MIN` / `PAUSE_MAX` — delay between spawning arcs
+- `FOCAL_DISTANCE` — curvature of the wavefront (larger = flatter)
+- `ARC_WIDTH` — base Gaussian thickness of the arc
+- `WARP_STRENGTH` / `WARP_SCALE` — domain warp for organic distortion
+- `CHROMATIC_OFFSET` — prismatic color channel separation
+- `COLORS` — list of arc colors (one picked randomly per arc)
+- `TRAIL_COLOR` — color the arc fades into as it passes
 
 ---
 
@@ -496,7 +501,7 @@ Autonomous boid agents follow Craig Reynolds' classic flocking rules — separat
 
 ![Aurora Borealis](screenshots/aurora.gif)
 
-Multi-layer value noise creates shimmering aurora curtains dancing across the keyboard. Three color bands — green, cyan, and magenta — drift at different speeds with Gaussian vertical falloff, blended additively onto a dark night sky. Vertical curtain displacement creates the characteristic folding motion of real auroras. A custom inline 2D value noise with two-octave fractal Brownian motion drives the organic flow. Occasional star twinkles flash briefly in the darker regions.
+Multi-layer value noise creates shimmering aurora curtains dancing across the keyboard. Three color bands — green, cyan, and magenta — drift at different speeds with Gaussian vertical falloff, blended additively onto a dark night sky. Vertical curtain displacement creates the characteristic folding motion of real auroras. Two-octave fractal Brownian motion drives the organic flow. Occasional star twinkles flash briefly in the darker regions.
 
 **Palette:** Dark night sky base with additive green, cyan, and magenta aurora bands. White star twinkles.
 
@@ -554,3 +559,29 @@ Moving seed points create a dynamic Voronoi diagram rendered as stained-glass ce
 - `EDGE_BRIGHTNESS` / `CELL_BRIGHTNESS` — edge and interior intensity
 - `SHATTER_INTERVAL_MIN` / `SHATTER_INTERVAL_MAX` — frames between shatter events
 - `SHATTER_DURATION` — frames the split lasts before merge
+
+---
+
+## Corruption
+
+**File:** `effects/corruption.py` | **FPS:** 18
+
+![Corruption](screenshots/corruption.gif)
+
+Organic digital decay that spreads across the keyboard like an infection. A calm breathing blue-teal gradient gets attacked by corruption sites that grow from random seed points with blobby, noise-modulated edges. Each infection follows a multi-phase lifecycle: incubation (single-pixel flicker warning), spread (blob expands outward), peak (maximum intensity with glitch artifacts), decay (contraction and healing), and scar (faint residual discoloration). At peak, sites can cascade — spawning child infections nearby. The corruption core renders dead pixels, white flashes, and channel swaps; the mid-zone shows hue shifts and sparks; the fringe glows with subtle warmth. Periodic power surges flare all active zones, and full-width scanline bleeds cut across the keyboard from high-intensity regions.
+
+**Palette:** Blue-teal breathing baseline, hot magenta-pink corruption, green-tinted scars.
+
+**Key config parameters:**
+- `BASELINE_PALETTE` — breathing gradient colors for the healthy state
+- `BASELINE_SPEED` — breathing animation speed
+- `SPAWN_INTERVAL` — average seconds between new corruption sites
+- `MAX_SITES` — maximum simultaneous corruption zones
+- `RADIUS_MIN` / `RADIUS_MAX` — blob radius range in cells
+- `INCUBATION_TIME` / `SPREAD_TIME` / `DECAY_TIME` / `SCAR_TIME` — lifecycle phase durations
+- `PEAK_TIME_MIN` / `PEAK_TIME_MAX` — peak phase duration range
+- `CORRUPT_COLOR` — hot magenta-pink corruption color
+- `SCAR_COLOR` — healed area tint
+- `CASCADE_CHANCE` — probability of spawning child sites at peak
+- `SURGE_INTERVAL` — seconds between power-surge flares
+- `ROW_BLEED_CHANCE` — chance per frame of full-width scanline bleed
