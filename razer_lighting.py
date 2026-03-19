@@ -12,7 +12,7 @@ import pystray
 from PIL import Image, ImageDraw
 
 from device import get_device
-from effects.common import discover_effects
+from effects.common import clear_keyboard, discover_effects
 
 APP_NAME = "Razer Lighting"
 AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
@@ -75,13 +75,24 @@ class RazerLightingApp:
         self.stop_event.clear()
         module = self.effects[name]
         self.effect_thread = threading.Thread(
-            target=module.run,
-            args=(self.device, self.stop_event),
+            target=self._run_effect_safe,
+            args=(module, self.device, self.stop_event),
             daemon=True,
         )
         self.effect_thread.start()
         print(f"Started: {name}" + (" (random)" if self.selected_choice == RANDOM_CHOICE else ""))
         self._update_menu()
+
+    def _run_effect_safe(self, module, device, stop_event):
+        """Run an effect, catching crashes to avoid silent thread death."""
+        try:
+            module.run(device, stop_event)
+        except Exception as e:
+            print(f"Effect crashed: {e}", file=sys.stderr)
+            try:
+                clear_keyboard(device)
+            except Exception:
+                pass
 
     def stop_current(self):
         """Stop the currently running effect."""

@@ -18,47 +18,13 @@ import numpy as np
 from effects.common import (
     load_config, draw_frame, clear_keyboard, frame_sleep,
     build_palette_lut, palette_lookup, make_coordinate_grids,
-    standalone_main,
+    fbm, standalone_main,
 )
 
 EFFECT_NAME = "Nebula Clouds"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nebula_config.py")
 
-# --- Value noise (same algorithm as aurora, different seed for variety) ---
-
-_perm = np.arange(256, dtype=np.int32)
-np.random.RandomState(137).shuffle(_perm)
-_perm = np.tile(_perm, 2)
-
-
-def _fade(t):
-    return t * t * t * (t * (t * 6 - 15) + 10)
-
-
-def noise_2d(x, y):
-    xi = np.floor(x).astype(np.int32) & 255
-    yi = np.floor(y).astype(np.int32) & 255
-    xf = x - np.floor(x)
-    yf = y - np.floor(y)
-    u = _fade(xf)
-    v = _fade(yf)
-    aa = _perm[_perm[xi] + yi]
-    ab = _perm[_perm[xi] + yi + 1]
-    ba = _perm[_perm[xi + 1] + yi]
-    bb = _perm[_perm[xi + 1] + yi + 1]
-    x1 = aa / 255.0 + u * (ba / 255.0 - aa / 255.0)
-    x2 = ab / 255.0 + u * (bb / 255.0 - ab / 255.0)
-    return x1 + v * (x2 - x1)
-
-
-def fbm_3oct(x, y):
-    """Three-octave fractal Brownian motion."""
-    return noise_2d(x, y) * 0.55 + noise_2d(x * 2, y * 2) * 0.3 + noise_2d(x * 4, y * 4) * 0.15
-
-
-def fbm_2oct(x, y):
-    """Two-octave fractal Brownian motion."""
-    return noise_2d(x, y) * 0.65 + noise_2d(x * 2, y * 2) * 0.35
+_NOISE_SEED = 137
 
 
 def run(device, stop_event):
@@ -104,14 +70,14 @@ def run(device, stop_event):
         # Layer 1: warm nebula (3 octaves)
         nx1 = col_grid * scale1 + dx1
         ny1 = row_grid * scale1 + dy1
-        n1 = fbm_3oct(nx1, ny1)
+        n1 = fbm(nx1, ny1, octaves=3, weights=(0.55, 0.3, 0.15), seed=_NOISE_SEED)
         # Boost contrast
         n1 = np.clip((n1 - 0.3) * 1.8, 0.0, 1.0) * bright_mult
 
         # Layer 2: cool accents (2 octaves)
         nx2 = col_grid * scale2 + dx2
         ny2 = row_grid * scale2 + dy2
-        n2 = fbm_2oct(nx2, ny2)
+        n2 = fbm(nx2, ny2, octaves=2, weights=(0.65, 0.35), seed=_NOISE_SEED)
         n2 = np.clip((n2 - 0.35) * 2.0, 0.0, 1.0)
 
         # Map through palettes

@@ -1,4 +1,4 @@
-numpy
-Pillow
-PyQt5
-pystray
+numpy>=1.26,<2
+Pillow>=10.2,<11
+PyQt5>=5.15,<6
+pystray>=0.19,<1

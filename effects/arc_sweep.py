@@ -17,38 +17,14 @@ import numpy as np
 
 from effects.common import (
     load_config, draw_frame, clear_keyboard, frame_sleep,
-    make_coordinate_grids, standalone_main,
+    make_coordinate_grids, value_noise_2d, standalone_main,
 )
 
 EFFECT_NAME = "Arc Sweep"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "arc_sweep_config.py")
 
-# --- Value noise for domain warping ---
-
-_perm = np.arange(256, dtype=np.int32)
-np.random.RandomState(7).shuffle(_perm)
-_perm = np.tile(_perm, 2)
-
-
-def _fade(t):
-    return t * t * t * (t * (t * 6 - 15) + 10)
-
-
-def _noise2d(x, y):
-    """Vectorized 2D value noise, returns [0, 1]."""
-    xi = np.floor(x).astype(np.int32) & 255
-    yi = np.floor(y).astype(np.int32) & 255
-    xf = x - np.floor(x)
-    yf = y - np.floor(y)
-    u, v = _fade(xf), _fade(yf)
-    aa = _perm[_perm[xi] + yi] / 255.0
-    ab = _perm[_perm[xi] + yi + 1] / 255.0
-    ba = _perm[_perm[xi + 1] + yi] / 255.0
-    bb = _perm[_perm[xi + 1] + yi + 1] / 255.0
-    x1 = aa + u * (ba - aa)
-    x2 = ab + u * (bb - ab)
-    return x1 + v * (x2 - x1)
+_NOISE_SEED = 7
 
 
 def spawn_arc(cfg, rows, cols):
@@ -138,9 +114,10 @@ def run(device, stop_event):
 
             # Domain warp for organic wavefront distortion
             if warp_str > 0:
-                warp = (_noise2d(
+                warp = (value_noise_2d(
                     col_grid * warp_scl + arc["noise_seed"],
-                    row_grid * warp_scl + t * 0.012
+                    row_grid * warp_scl + t * 0.012,
+                    seed=_NOISE_SEED,
                 ) - 0.5) * 2.0 * warp_str
                 dist_w = dist + warp
             else:

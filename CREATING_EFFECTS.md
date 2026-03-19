@@ -131,6 +131,24 @@ from effects.common import (
 )
 ```
 
+### Value noise
+
+```python
+from effects.common import value_noise_2d, fbm
+
+row_grid, col_grid = make_coordinate_grids(rows, cols)
+
+# Basic 2D value noise (returns values in 0-1)
+n = value_noise_2d(col_grid * 0.15, row_grid * 0.15 + t, seed=42)
+
+# Fractal Brownian motion (layered noise for richer detail)
+n = fbm(col_grid * 0.15, row_grid * 0.15 + t, octaves=2, seed=42)
+# Custom octave weights:
+n = fbm(x, y, octaves=3, weights=(0.55, 0.3, 0.15), seed=137)
+```
+
+Different seeds produce different patterns — use a unique seed per effect for visual variety. Used by Aurora Borealis, Arc Sweep, and Nebula Clouds.
+
 ### Config loading
 
 ```python

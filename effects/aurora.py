@@ -9,7 +9,6 @@ Occasional star twinkles flash in the darker regions.
 Edit aurora_config.py while running to tweak on the fly.
 """
 
-import math
 import os
 import time
 
@@ -17,47 +16,13 @@ import numpy as np
 
 from effects.common import (
     load_config, draw_frame, clear_keyboard, frame_sleep,
-    make_coordinate_grids, standalone_main,
+    make_coordinate_grids, fbm, standalone_main,
 )
 
 EFFECT_NAME = "Aurora Borealis"
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aurora_config.py")
 
-# --- Value noise implementation (no external deps) ---
-
-_perm = np.arange(256, dtype=np.int32)
-np.random.RandomState(42).shuffle(_perm)
-_perm = np.tile(_perm, 2)
-
-
-def _fade(t):
-    return t * t * t * (t * (t * 6 - 15) + 10)
-
-
-def noise_2d(x, y):
-    """Vectorized 2D value noise. x, y are numpy arrays of same shape."""
-    xi = np.floor(x).astype(np.int32) & 255
-    yi = np.floor(y).astype(np.int32) & 255
-    xf = x - np.floor(x)
-    yf = y - np.floor(y)
-    u = _fade(xf)
-    v = _fade(yf)
-    aa = _perm[_perm[xi] + yi]
-    ab = _perm[_perm[xi] + yi + 1]
-    ba = _perm[_perm[xi + 1] + yi]
-    bb = _perm[_perm[xi + 1] + yi + 1]
-    n_aa = aa / 255.0
-    n_ab = ab / 255.0
-    n_ba = ba / 255.0
-    n_bb = bb / 255.0
-    x1 = n_aa + u * (n_ba - n_aa)
-    x2 = n_ab + u * (n_bb - n_ab)
-    return x1 + v * (x2 - x1)
-
-
-def fbm_2d(x, y):
-    """Two-octave fractal Brownian motion."""
-    return noise_2d(x, y) * 0.7 + noise_2d(x * 2, y * 2) * 0.3
+_NOISE_SEED = 42
 
 
 def run(device, stop_event):
@@ -111,7 +76,7 @@ def run(device, stop_event):
             # Sample noise at displaced coordinates
             nx = (col_grid + curtain_offset * 2.0) * noise_scale
             ny = t * scroll_speed * speed_mult + row_grid * noise_scale * 0.5
-            n = fbm_2d(nx, ny)
+            n = fbm(nx, ny, octaves=2, weights=(0.7, 0.3), seed=_NOISE_SEED)
 
             # Vertical Gaussian falloff from band center
             row_dist = row_grid - center_row

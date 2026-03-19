@@ -77,7 +77,7 @@ systemctl --user enable --now openrazer-daemon
 3. Install Python dependencies:
 
    ```bash
-   .venv/bin/pip install pystray Pillow PyQt5 numpy
+   .venv/bin/pip install -r requirements.txt
    ```
 
    | Package | Purpose |

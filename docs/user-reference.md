@@ -359,6 +359,19 @@ from effects.common import (
 | `laplacian_9pt(grid)` | Weighted 9-point stencil (0.2 for orthogonal, 0.05 for diagonal). Wraps toroidally. |
 | `blur_3x3(grid)` | Simple 3×3 box blur. Wraps toroidally. |
 
+### Value Noise
+
+```python
+from effects.common import value_noise_2d, fbm
+```
+
+| Function | Description |
+|---|---|
+| `value_noise_2d(x, y, seed=42)` | Vectorized 2D value noise. `x`, `y` are numpy arrays; returns values in [0, 1]. Different `seed` values produce different patterns. |
+| `fbm(x, y, octaves=2, weights=None, seed=42)` | Fractal Brownian motion built on `value_noise_2d`. Layers multiple noise octaves for organic textures. Default weights: `(0.7, 0.3)` for 2 octaves, `(0.55, 0.3, 0.15)` for 3. |
+
+Used by Aurora Borealis (`seed=42`), Arc Sweep (`seed=7`), and Nebula Clouds (`seed=137`).
+
 ### Standalone Entry Point
 
 ```python

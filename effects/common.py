@@ -202,6 +202,78 @@ def blur_3x3(grid):
     return total / 9.0
 
 
+# --- Value noise ---
+
+def _make_perm(seed):
+    """Build a 512-entry permutation table from a seed."""
+    perm = np.arange(256, dtype=np.int32)
+    np.random.RandomState(seed).shuffle(perm)
+    return np.tile(perm, 2)
+
+
+# Pre-built tables for each effect that uses noise (avoids rebuilding per frame)
+_perm_tables = {}
+
+
+def _get_perm(seed):
+    if seed not in _perm_tables:
+        _perm_tables[seed] = _make_perm(seed)
+    return _perm_tables[seed]
+
+
+def _fade(t):
+    return t * t * t * (t * (t * 6 - 15) + 10)
+
+
+def value_noise_2d(x, y, seed=42):
+    """Vectorized 2D value noise. Returns values in [0, 1].
+
+    x, y: numpy arrays of the same shape (sampling coordinates).
+    seed: integer seed for the permutation table (different seeds give
+          different patterns).
+    """
+    perm = _get_perm(seed)
+    xi = np.floor(x).astype(np.int32) & 255
+    yi = np.floor(y).astype(np.int32) & 255
+    xf = x - np.floor(x)
+    yf = y - np.floor(y)
+    u = _fade(xf)
+    v = _fade(yf)
+    aa = perm[perm[xi] + yi] / 255.0
+    ab = perm[perm[xi] + yi + 1] / 255.0
+    ba = perm[perm[xi + 1] + yi] / 255.0
+    bb = perm[perm[xi + 1] + yi + 1] / 255.0
+    x1 = aa + u * (ba - aa)
+    x2 = ab + u * (bb - ab)
+    return x1 + v * (x2 - x1)
+
+
+def fbm(x, y, octaves=2, weights=None, seed=42):
+    """Fractal Brownian motion built on value_noise_2d.
+
+    octaves: number of noise layers (default 2).
+    weights: per-octave amplitude weights.  If None, uses standard
+             halving (0.7, 0.3 for 2 octaves; 0.55, 0.3, 0.15 for 3).
+    seed: permutation table seed.
+    """
+    if weights is None:
+        if octaves == 2:
+            weights = (0.7, 0.3)
+        elif octaves == 3:
+            weights = (0.55, 0.3, 0.15)
+        else:
+            # Geometric falloff
+            raw = [0.5 ** i for i in range(octaves)]
+            total = sum(raw)
+            weights = [w / total for w in raw]
+    result = np.zeros_like(x, dtype=np.float64)
+    freq = 1.0
+    for w in weights:
+        result += value_noise_2d(x * freq, y * freq, seed=seed) * w
+        freq *= 2.0
+    return result
+
+
 # --- Effect discovery ---
 
 EFFECTS_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -79,7 +79,10 @@ class AboutDialog(QDialog):
 
 
 def main():
+    from config_window import DARK_STYLESHEET
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    app.setStyleSheet(DARK_STYLESHEET)
     dialog = AboutDialog()
     dialog.exec_()
 

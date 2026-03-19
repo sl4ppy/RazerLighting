@@ -162,6 +162,8 @@ For physics simulations and cellular automata, `effects/common.py` provides:
 | `laplacian_4pt(grid)` | Measures how each cell differs from its 4 neighbors. Used for heat diffusion, wave equations. Wraps toroidally. |
 | `laplacian_9pt(grid)` | Weighted 9-point version — smoother results for reaction-diffusion. |
 | `blur_3x3(grid)` | Smooths a grid using a 3×3 box average. Used by physarum for trail diffusion. |
+| `value_noise_2d(x, y, seed)` | Vectorized 2D value noise returning values in [0, 1]. Different seeds give different patterns. |
+| `fbm(x, y, octaves, weights, seed)` | Fractal Brownian motion — layered noise for organic textures. Used by aurora, arc sweep, and nebula. |
 
 See the [User Reference > Shared Utilities](../user-reference.md#shared-utilities-effectscommonpy) for full details.
 
