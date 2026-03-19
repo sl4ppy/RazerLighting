@@ -1,5 +1,6 @@
 """Shared utilities for all lighting effects."""
 
+import importlib.util
 import math
 import os
 import sys
@@ -13,7 +14,12 @@ _config_cache = {}  # path -> (mtime, config_dict)
 
 
 def load_config(config_path):
-    """Load config from file, using cached version if file unchanged."""
+    """Load config from file, using cached version if file unchanged.
+
+    Uses exec() rather than importlib so config files are simple namespace
+    dicts without module registration side effects.  Config files are local
+    user-owned files, not external input — the exec() is intentional.
+    """
     try:
         mt = os.path.getmtime(config_path)
         cached = _config_cache.get(config_path)
@@ -21,7 +27,7 @@ def load_config(config_path):
             return cached[1]
         cfg = {}
         with open(config_path) as f:
-            exec(f.read(), cfg)
+            exec(f.read(), cfg)  # noqa: S102 — intentional; see docstring
         _config_cache[config_path] = (mt, cfg)
         return cfg
     except Exception as e:
@@ -194,6 +200,36 @@ def blur_3x3(grid):
         for dc in (-1, 0, 1):
             total += np.roll(np.roll(grid, dr, axis=0), dc, axis=1)
     return total / 9.0
+
+
+# --- Effect discovery ---
+
+EFFECTS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def discover_effects(effects_dir=None):
+    """Find all effect modules in the effects directory."""
+    if effects_dir is None:
+        effects_dir = EFFECTS_DIR
+    effects = {}
+    for filename in sorted(os.listdir(effects_dir)):
+        if filename.endswith("_config.py") or filename.startswith("__"):
+            continue
+        if not filename.endswith(".py"):
+            continue
+        if filename == "common.py":
+            continue
+        path = os.path.join(effects_dir, filename)
+        try:
+            spec = importlib.util.spec_from_file_location(filename[:-3], path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if hasattr(module, "run"):
+                name = getattr(module, "EFFECT_NAME", filename[:-3].replace("_", " ").title())
+                effects[name] = module
+        except Exception as e:
+            print(f"Skipping {filename}: {e}", file=sys.stderr)
+    return effects
 
 
 # --- Standalone main helper ---

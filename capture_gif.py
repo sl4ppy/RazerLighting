@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Capture an effect as an animated GIF using the virtual device and PIL rendering."""
 
+import ast
 import importlib.util
 import os
 import sys
@@ -9,52 +10,10 @@ import time
 
 from PIL import Image, ImageDraw, ImageFont
 
+from keyboard_layout import compute_key_rects
+
 EFFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "effects")
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "screenshots")
-
-# Keyboard layout matching config_window.py
-KEYBOARD_LAYOUT = [
-    [("Esc", 0, 1.0), ("F1", 1, 1.0), ("F2", 2, 1.0), ("F3", 3, 1.0), ("F4", 4, 1.0),
-     ("F5", 5, 1.0), ("F6", 6, 1.0), ("F7", 7, 1.0), ("F8", 8, 1.0), ("F9", 9, 1.0),
-     ("F10", 10, 1.0), ("F11", 11, 1.0), ("F12", 12, 1.0), ("Del", 13, 1.0)],
-    [("`", 0, 1.0), ("1", 1, 1.0), ("2", 2, 1.0), ("3", 3, 1.0), ("4", 4, 1.0),
-     ("5", 5, 1.0), ("6", 6, 1.0), ("7", 7, 1.0), ("8", 8, 1.0), ("9", 9, 1.0),
-     ("0", 10, 1.0), ("-", 11, 1.0), ("=", 12, 1.0), ("Bksp", 13, 2.0)],
-    [("Tab", 0, 1.5), ("Q", 1, 1.0), ("W", 2, 1.0), ("E", 3, 1.0), ("R", 4, 1.0),
-     ("T", 5, 1.0), ("Y", 6, 1.0), ("U", 7, 1.0), ("I", 8, 1.0), ("O", 9, 1.0),
-     ("P", 10, 1.0), ("[", 11, 1.0), ("]", 12, 1.0), ("\\", 13, 1.5)],
-    [("Caps", 0, 1.75), ("A", 1, 1.0), ("S", 2, 1.0), ("D", 3, 1.0), ("F", 4, 1.0),
-     ("G", 5, 1.0), ("H", 6, 1.0), ("J", 7, 1.0), ("K", 8, 1.0), ("L", 9, 1.0),
-     (";", 10, 1.0), ("'", 11, 1.0), ("Enter", 12, 2.25)],
-    [("Shift", 0, 2.25), ("Z", 1, 1.0), ("X", 2, 1.0), ("C", 3, 1.0), ("V", 4, 1.0),
-     ("B", 5, 1.0), ("N", 6, 1.0), ("M", 7, 1.0), (",", 8, 1.0), (".", 9, 1.0),
-     ("/", 10, 1.0), ("Shift", 11, 1.75), ("\u2191", 12, 1.0)],
-    [("Ctrl", 0, 1.25), ("Fn", 1, 1.0), ("Super", 2, 1.25), ("Alt", 3, 1.25),
-     ("Space", 4, 6.25), ("Alt", 9, 1.0), ("Ctrl", 10, 1.0),
-     ("\u2190", 11, 1.0), ("\u2193", 12, 1.0), ("\u2192", 13, 1.0)],
-]
-
-GAP = 0.08
-ROW_HEIGHT = 1.0
-
-
-def compute_key_rects():
-    """Compute key layout as list of dicts with unit-space coordinates."""
-    keys = []
-    for row_idx, row_keys in enumerate(KEYBOARD_LAYOUT):
-        x = 0.0
-        for label, col_idx, width_u in row_keys:
-            keys.append({
-                "label": label,
-                "row": row_idx,
-                "col": col_idx,
-                "x": x,
-                "y": row_idx * (ROW_HEIGHT + GAP),
-                "w": width_u - GAP,
-                "h": ROW_HEIGHT,
-            })
-            x += width_u
-    return keys
 
 
 def render_frame(frame_data, key_rects, width=640, height=375):
@@ -80,14 +39,15 @@ def render_frame(frame_data, key_rects, width=640, height=375):
     corner = max(2, min(int(3 * scale / 20), 6))
 
     for key in key_rects:
-        row, col = key["row"], key["col"]
+        col = key["col"]
         kx = int(offset_x + key["x"] * scale)
         ky = int(offset_y + key["y"] * scale)
         kw = int(key["w"] * scale)
         kh = int(key["h"] * scale)
 
-        if row < len(frame_data) and col < len(frame_data[row]):
-            r, g, b = frame_data[row][col]
+        mrow = key.get("matrix_row", key["row"])
+        if mrow < len(frame_data) and col < len(frame_data[mrow]):
+            r, g, b = frame_data[mrow][col]
         else:
             r, g, b = 0, 0, 0
 
@@ -200,8 +160,8 @@ def main():
         if "=" in arg:
             k, v = arg.split("=", 1)
             try:
-                overrides[k] = eval(v)
-            except Exception:
+                overrides[k] = ast.literal_eval(v)
+            except (ValueError, SyntaxError):
                 overrides[k] = v
 
     capture(effect_name, duration, overrides if overrides else None)

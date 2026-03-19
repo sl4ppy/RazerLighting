@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Razer Lighting - system tray app for custom keyboard lighting effects."""
 
-import importlib.util
 import os
 import random
 import signal
@@ -13,9 +12,9 @@ import pystray
 from PIL import Image, ImageDraw
 
 from device import get_device
+from effects.common import discover_effects
 
 APP_NAME = "Razer Lighting"
-EFFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "effects")
 AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
 AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, "razer-lighting.desktop")
 STATE_DIR = os.path.expanduser("~/.local/state/razer-lighting")
@@ -31,27 +30,6 @@ def create_icon_image():
     draw.ellipse([16, 16, 48, 48], fill=(0, 0, 0, 255))
     draw.ellipse([24, 24, 40, 40], fill=(0, 200, 0, 255))
     return img
-
-
-def discover_effects():
-    """Find all effect modules in the effects directory."""
-    effects = {}
-    for filename in sorted(os.listdir(EFFECTS_DIR)):
-        if filename.endswith("_config.py") or filename.startswith("__"):
-            continue
-        if not filename.endswith(".py"):
-            continue
-        path = os.path.join(EFFECTS_DIR, filename)
-        try:
-            spec = importlib.util.spec_from_file_location(filename[:-3], path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            if hasattr(module, "run"):
-                name = getattr(module, "EFFECT_NAME", filename[:-3].replace("_", " ").title())
-                effects[name] = module
-        except Exception as e:
-            print(f"Skipping {filename}: {e}", file=sys.stderr)
-    return effects
 
 
 def save_last_effect(name):
@@ -113,7 +91,13 @@ class RazerLightingApp:
         self.effect_thread = None
 
     def open_config_window(self):
-        """Open the configuration window as a separate process."""
+        """Open the configuration window as a separate process.
+
+        Launched as a subprocess because the tray uses pystray (GTK on Linux)
+        and the config window uses PyQt5.  GTK and Qt event loops cannot
+        coexist in the same process without careful integration, so a
+        separate process is the cleanest approach.
+        """
         script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config_window.py")
         effect = self.current_effect_name or ""
         subprocess.Popen([sys.executable, script, effect])

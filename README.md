@@ -94,12 +94,14 @@ See the **[Creating Effects Guide](CREATING_EFFECTS.md)** for the full walkthrou
 ```
 razer_lighting.py            System tray app
 config_window.py             PyQt5 configuration GUI with live preview
+config_widgets.py            Parameter editor widgets (sliders, color pickers, etc.)
 config_parser.py             AST-based config file parsing & writing
+keyboard_layout.py           Keyboard layout data and key-rect computation
 virtual_device.py            Virtual device for preview rendering
 device.py                    OpenRazer device connection with retry
 capture_gif.py               Animated GIF capture tool
 effects/
-  ├── common.py              Shared utilities (palette, timing, grid math)
+  ├── common.py              Shared utilities (palette, timing, discovery, grid math)
   ├── arc_sweep.py           Effect module (28 total)
   ├── arc_sweep_config.py    Hot-reloadable config
   └── ...

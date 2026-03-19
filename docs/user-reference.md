@@ -422,14 +422,16 @@ GIFs are saved to `screenshots/<effect_name>.gif`. The tool:
 | Path | Purpose |
 |---|---|
 | `razer_lighting.py` | System tray application entry point |
-| `config_window.py` | PyQt5 configuration GUI |
+| `config_window.py` | PyQt5 configuration GUI (main window, visualizer, preview runner) |
+| `config_widgets.py` | Parameter editor widgets (sliders, color pickers, palette editors) |
 | `config_parser.py` | AST-based config file parsing, type inference, and write-back |
+| `keyboard_layout.py` | Keyboard layout data and key-rect computation |
 | `virtual_device.py` | Virtual OpenRazer device for preview rendering |
 | `device.py` | OpenRazer device connection with retry logic |
 | `capture_gif.py` | Animated GIF capture tool |
 | `about_window.py` | About dialog |
 | `effects/` | Effect modules directory |
-| `effects/common.py` | Shared utilities library |
+| `effects/common.py` | Shared utilities library (palette, timing, discovery, grid math) |
 | `effects/<name>.py` | Individual effect module |
 | `effects/<name>_config.py` | Effect configuration (hot-reloadable) |
 | `screenshots/` | Captured GIF previews |

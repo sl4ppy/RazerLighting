@@ -331,7 +331,27 @@ def _infer_type(name, value):
 
 
 def _infer_range(name, value, param_type):
-    """Infer slider min/max/step from variable name and current value."""
+    """Infer slider min/max/step from variable name and current value.
+
+    Uses a priority cascade of name-pattern matching on the UPPER_CASE
+    variable name.  Earlier matches take priority:
+
+      1. Exact:   FPS → 1..60
+      2. Probability keywords (CHANCE, BLEND, AMOUNT, DENSITY, DAMPING)
+                  → 0..1 for float, 0..100 for int
+      3. Position suffixes (_X, _Y, _FADE) → 0..1 if current value is in range
+      4. THRESHOLD → 0..value*3 (float) or 0..value*5 (int)
+      5. Count prefixes (NUM_, MAX_) → 1..value*5 (int only)
+      6. SPEED / RATE → scaled from current value
+      7. SCALE / RATIO → 0.01..value*5
+      8. WIDTH / RADIUS / DIST → 0..value*5
+      9. SHARPNESS / INTENSITY / FALLOFF → 0..value*3
+     10. Fallback: derive range from current value magnitude
+
+    When adding a new effect, parameters with non-standard names will hit
+    the fallback (rule 10).  Add a specific rule above if the fallback
+    produces a poor range for a common naming pattern.
+    """
     if param_type not in ("int", "float"):
         return 0.0, 1.0, 0.01
 

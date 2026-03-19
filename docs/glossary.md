@@ -48,7 +48,7 @@ A color model where Hue is the color angle (0–360°), Saturation is color inte
 
 ### Keyboard layout
 
-The physical arrangement of keys on the keyboard, used by the configuration GUI visualizer to render a realistic preview. Defined in `config_window.py` as a list of key positions with labels, matrix column mappings, and widths.
+The physical arrangement of keys on the keyboard, used by the configuration GUI visualizer and GIF capture tool to render a realistic preview. Defined in `keyboard_layout.py` as a list of key positions with labels, matrix column mappings, and widths.
 
 ### Laplacian
 
