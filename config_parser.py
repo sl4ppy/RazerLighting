@@ -587,9 +587,12 @@ def _extract_comment(line_text, value_repr):
 
 def parse_config(config_path):
     """Parse a config file and return list of ConfigParam."""
-    with open(config_path) as f:
-        source = f.read()
-        lines = source.splitlines()
+    try:
+        with open(config_path) as f:
+            source = f.read()
+            lines = source.splitlines()
+    except (FileNotFoundError, PermissionError, OSError):
+        return []
 
     tree = ast.parse(source, filename=config_path)
     params = []

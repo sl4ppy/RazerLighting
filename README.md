@@ -6,11 +6,11 @@ Per-key RGB control for Razer laptop keyboards on Linux — 28 procedural effect
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![OpenRazer](https://img.shields.io/badge/Driver-OpenRazer-brightgreen.svg)](https://openrazer.github.io/)
 
-![Plasma effect](screenshots/plasma.gif)
+![Configuration window showing Plasma effect](screenshots/config_window.png)
 
 <p align="center">
+  <img src="screenshots/plasma.gif" width="49%" />
   <img src="screenshots/metaballs.gif" width="49%" />
-  <img src="screenshots/arc_sweep.gif" width="49%" />
 </p>
 
 > Every effect is procedurally generated and runs indefinitely. See all 28 with animated previews in the **[Effects Guide](EFFECTS.md)**.
