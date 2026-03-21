@@ -137,19 +137,20 @@ Open **Configure...** from the tray menu to launch the config window:
 
 ![Configuration window overview](images/screenshots/SS-003.png)
 
-The window has three main areas:
+The window has four main areas:
 
-1. **Effect dropdown** (top) — switch between all effects.
-2. **Parameter panel** (left) — auto-generated controls for the selected effect's config file. Parameters are grouped into Timing, Colors, Simulation, and Other categories.
-3. **Keyboard visualizer** (right) — a real-time preview of the effect rendered on a realistic Razer Blade keyboard layout.
+1. **Effect gallery** (left sidebar) — browse all effects with search and category filters. Click a card to switch effects.
+2. **Header bar** (top) — current effect name, category, description, and action buttons.
+3. **Keyboard visualizer** (center) — a real-time preview with per-key glow, 3D depth, and ambient bloom effects.
+4. **Parameter panel** (bottom) — auto-generated controls in collapsible groups (Timing, Colors, Simulation, Other).
 
-Changes you make to sliders, color pickers, or checkboxes are immediately visible in the preview. They do **not** affect the real keyboard or the saved config until you click **Save**.
+Changes you make to sliders, color pickers, or checkboxes are immediately visible in the preview. They do **not** affect the real keyboard or the saved config until you click **Save**. The status bar shows a live FPS counter and an unsaved-changes indicator.
 
 | Button | Action |
 |---|---|
 | **Save** | Write current values to the effect's `_config.py` file. The running effect picks up changes on its next frame. |
-| **Revert to Saved** | Discard unsaved changes and reload from the config file on disk. |
-| **Reset to Defaults** | Restore the values that were in the config when the GUI first opened it. |
+| **Revert** | Discard unsaved changes and reload from the config file on disk. |
+| **Reset** | Restore the original default values. |
 
 ## Key Concepts
 

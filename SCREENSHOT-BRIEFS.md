@@ -41,17 +41,18 @@ Each brief describes an image referenced in the documentation. Filenames match t
 ### SS-003
 - **Filename**: `docs/images/screenshots/SS-003.png`
 - **Referenced in**: `docs/getting-started.md` > The Configuration GUI; `docs/tutorials/02-using-the-config-gui.md` > Step 1
-- **Subject**: Full configuration window showing the effect dropdown, parameter panel, and keyboard visualizer with an effect running
+- **Subject**: Full configuration window (v1.1.0) showing the effect gallery sidebar, header bar, keyboard visualizer with glow effects, and collapsible parameter panel
 - **Capture type**: UI SCREENSHOT
 - **Crop tier**: FULL WINDOW
-- **Capture region**: The entire ConfigWindow at approximately 1050×650 resolution. Dark theme should be visible.
-- **State**: "Plasma" selected in dropdown. Parameter panel showing Timing group (FPS, Scale X, Scale Y, Time Speed) and Colors group (Palette with multiple swatches). Keyboard visualizer showing the plasma effect with orange/purple flowing colors.
+- **Capture region**: The entire ConfigWindow at approximately 1200×720 resolution. Dark theme with Razer green (#44D62C) accents.
+- **State**: "Plasma" selected in the gallery sidebar (card highlighted). Header bar showing "Plasma" title with "MATHEMATICAL" category tag and description. Keyboard visualizer showing plasma effect with per-key glow bloom and 3D depth. Parameter panel below showing collapsible Timing group (expanded) and Colors group.
 - **Annotations**:
-  - NUMBERED BADGE 1: Adjacent to the effect dropdown, labeled "1"
-  - NUMBERED BADGE 2: Adjacent to the parameter scroll area, labeled "2"
-  - NUMBERED BADGE 3: Adjacent to the keyboard visualizer, labeled "3"
-  - CALLOUT BOX BLUE: Around the Save/Revert/Reset buttons at the bottom, labeled "Save controls"
-- **Alt text**: Configuration window with dark theme showing Plasma effect selected. Left panel has sliders for FPS, Scale X, Scale Y, and Time Speed, plus a palette editor with orange, pink, purple, and violet color swatches. Right panel shows a realistic keyboard visualization with flowing orange and purple plasma colors on every key.
+  - NUMBERED BADGE 1: Adjacent to the effect gallery sidebar, labeled "1"
+  - NUMBERED BADGE 2: Adjacent to the keyboard visualizer, labeled "2"
+  - NUMBERED BADGE 3: Adjacent to the parameter panel, labeled "3"
+  - CALLOUT BOX BLUE: Around the Save/Revert/Reset buttons in the header bar, labeled "Save controls"
+  - CALLOUT BOX AMBER: Around the status bar at the bottom, labeled "FPS & status"
+- **Alt text**: Configuration window with dark theme showing Plasma effect. Left sidebar has a searchable effect gallery with category filter buttons. Center shows a keyboard visualization with glowing orange and purple plasma colors with ambient bloom effects. Bottom panel has collapsible parameter groups with sliders for FPS and Time Speed, plus a palette editor. Header bar shows effect name, category, and action buttons. Status bar shows FPS counter and matrix dimensions.
 
 ---
 
@@ -87,31 +88,31 @@ Each brief describes an image referenced in the documentation. Filenames match t
 ### SS-009
 - **Filename**: `docs/images/screenshots/SS-009.png`
 - **Referenced in**: `docs/tutorials/02-using-the-config-gui.md` > Step 3
-- **Subject**: The parameter panel showing the Timing group with the FPS slider being adjusted
+- **Subject**: The collapsible parameter panel showing the Timing group expanded with the FPS slider being adjusted
 - **Capture type**: UI SCREENSHOT
 - **Crop tier**: PANEL CROP
-- **Capture region**: The left parameter panel of the config window, showing the Timing group box with FPS slider, and at least one other slider (Scale X or Speed). The FPS slider handle should be at a non-default position (e.g., 30).
+- **Capture region**: The bottom parameter panel of the config window, showing the Timing collapsible group expanded with FPS slider and at least one other slider (Time Speed or Overlay Time Speed). The FPS slider handle should be at a non-default position (e.g., 30). The group header should show the collapse arrow.
 - **State**: Plasma effect selected. FPS slider at 30, spinbox showing 30.
 - **Annotations**:
   - ARROW RED: Pointing at the FPS slider handle
   - CALLOUT BOX BLUE: Around the spinbox showing "30", labeled "Exact value"
-- **Alt text**: Parameter panel showing the Timing group with a FPS slider set to 30, Scale X and Scale Y sliders, and a Time Speed slider. Each slider has a label on the left and a spinbox showing the exact value on the right.
+- **Alt text**: Parameter panel showing the Timing collapsible group expanded with a FPS slider set to 30 and Time Speed slider. Each slider has a label on the left and a monospace spinbox showing the exact value on the right. The group header shows a downward arrow indicating it is expanded.
 
 ---
 
 ### SS-010
 - **Filename**: `docs/images/screenshots/SS-010.png`
 - **Referenced in**: `docs/tutorials/02-using-the-config-gui.md` > Step 4
-- **Subject**: The Colors group showing a palette editor with multiple color swatches and +/- buttons
+- **Subject**: The Colors collapsible group showing a palette editor with larger color swatches and +/- buttons
 - **Capture type**: UI SCREENSHOT
 - **Crop tier**: PANEL CROP
-- **Capture region**: The Colors group box in the parameter panel, showing the Palette parameter with its row of color swatches (should show at least 5 colors from the Plasma palette), the + and - buttons, and optionally the hex value labels.
+- **Capture region**: The Colors collapsible group in the parameter panel (expanded), showing the Palette parameter with its row of 48×32px color swatches (at least 5 colors from the Plasma palette), the + and − buttons, and the hex value labels in monospace.
 - **State**: Plasma effect selected with its default sunset palette.
 - **Annotations**:
   - NUMBERED BADGE 1: Next to a color swatch, indicating "click to change"
   - ARROW RED: Pointing at the "+" button
   - CALLOUT BOX BLUE: Around the hex label (e.g., "#ff6400"), labeled "Hex value"
-- **Alt text**: Colors group showing a Palette parameter with a row of colored squares in orange, yellow, pink, magenta, and purple tones. Plus and minus buttons allow adding or removing colors. A hex value label shows the color code.
+- **Alt text**: Colors collapsible group showing a Palette parameter with a row of larger colored squares in orange, yellow, pink, magenta, and purple tones. Plus and minus buttons allow adding or removing colors. A monospace hex value label shows the color code.
 
 ---
 
@@ -155,7 +156,7 @@ Each brief describes an image referenced in the documentation. Filenames match t
 - **State**: N/A
 - **Annotations**: None (diagram is self-annotating)
 - **Alt text**: Flow diagram showing the effect lifecycle. Start leads to a loop containing three steps: read config, compute colors, draw to keyboard. The loop exits when stop event is set, leading to clear keyboard and exit.
-- **Image generation prompt**: Flat design flow diagram of an effect lifecycle. Clean vector style, limited palette of dark charcoal background, green (#00cc00) for flow arrows and active states, white for text. Horizontal flow from left to right. Start node (circle) → loop box containing three steps stacked vertically (Read Config → Compute Colors → Draw) with a return arrow → decision diamond (Stop Event?) → Clear Keyboard box → End node (circle). Keep minimal, no decorative elements, no rendered text inside the image that would need to be readable — use shapes and arrows only.
+- **Image generation prompt**: Flat design flow diagram of an effect lifecycle. Clean vector style, limited palette of dark charcoal background, Razer green (#44D62C) for flow arrows and active states, white for text. Horizontal flow from left to right. Start node (circle) → loop box containing three steps stacked vertically (Read Config → Compute Colors → Draw) with a return arrow → decision diamond (Stop Event?) → Clear Keyboard box → End node (circle). Keep minimal, no decorative elements, no rendered text inside the image that would need to be readable — use shapes and arrows only.
 
 ---
 

@@ -3,7 +3,7 @@
 from functools import partial
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QLinearGradient, QPainter, QBrush, QPen
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSlider, QSpinBox,
     QDoubleSpinBox, QCheckBox, QColorDialog, QTableWidget, QTableWidgetItem,
@@ -11,6 +11,9 @@ from PyQt5.QtWidgets import (
 )
 
 from config_parser import humanize_name
+
+# Shared label width for alignment
+LABEL_WIDTH = 130
 
 
 class IntParamWidget(QWidget):
@@ -20,10 +23,10 @@ class IntParamWidget(QWidget):
         super().__init__()
         self.param = param
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 2, 0, 2)
+        layout.setContentsMargins(0, 4, 0, 4)
 
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         layout.addWidget(label)
 
@@ -39,7 +42,7 @@ class IntParamWidget(QWidget):
         self.spin.setMaximum(int(param.range_max))
         self.spin.setSingleStep(int(param.range_step))
         self.spin.setValue(int(param.value))
-        self.spin.setFixedWidth(65)
+        self.spin.setFixedWidth(70)
         layout.addWidget(self.spin)
 
         self.slider.valueChanged.connect(self.spin.setValue)
@@ -69,10 +72,10 @@ class FloatParamWidget(QWidget):
         self._fmin = param.range_min
         self._fmax = param.range_max
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 2, 0, 2)
+        layout.setContentsMargins(0, 4, 0, 4)
 
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         layout.addWidget(label)
 
@@ -90,7 +93,7 @@ class FloatParamWidget(QWidget):
         self.spin.setMaximum(param.range_max)
         self.spin.setSingleStep(param.range_step)
         self.spin.setValue(param.value)
-        self.spin.setFixedWidth(75)
+        self.spin.setFixedWidth(80)
         layout.addWidget(self.spin)
 
         self.slider.valueChanged.connect(self._slider_to_spin)
@@ -136,7 +139,7 @@ class BoolParamWidget(QWidget):
         super().__init__()
         self.param = param
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 2, 0, 2)
+        layout.setContentsMargins(0, 4, 0, 4)
 
         self.check = QCheckBox(humanize_name(param.name))
         self.check.setChecked(param.value)
@@ -154,27 +157,30 @@ class BoolParamWidget(QWidget):
 
 
 class ColorButton(QPushButton):
-    """A button that shows a color swatch and opens a color picker on click."""
+    """A swatch button that shows a color and opens a picker on click."""
     color_changed = pyqtSignal(tuple)
 
     def __init__(self, color=(0, 0, 0)):
         super().__init__()
         self._color = tuple(color)
-        self.setFixedSize(36, 28)
+        self.setFixedSize(48, 32)
         self.setCursor(Qt.PointingHandCursor)
         self._update_style()
         self.clicked.connect(self._pick_color)
 
     def _update_style(self):
         r, g, b = self._color
-        # Use light or dark text depending on brightness
         brightness = r * 0.299 + g * 0.587 + b * 0.114
-        text_color = "#000000" if brightness > 127 else "#ffffff"
+        # Subtle inner border for depth
+        border = f"rgba({max(0,r-40)},{max(0,g-40)},{max(0,b-40)},0.8)"
+        highlight = f"rgba({min(255,r+30)},{min(255,g+30)},{min(255,b+30)},0.6)"
         self.setStyleSheet(
-            f"QPushButton {{ background-color: rgb({r},{g},{b}); "
-            f"border: 1px solid #555; border-radius: 3px; color: {text_color}; "
-            f"font-size: 9px; }}"
-            f"QPushButton:hover {{ border-color: #00ff00; }}"
+            f"QPushButton {{ "
+            f"background-color: rgb({r},{g},{b}); "
+            f"border: 2px solid {border}; "
+            f"border-top-color: {highlight}; "
+            f"border-radius: 4px; }}"
+            f"QPushButton:hover {{ border-color: #44D62C; }}"
         )
 
     def _pick_color(self):
@@ -200,10 +206,10 @@ class ColorParamWidget(QWidget):
         super().__init__()
         self.param = param
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 2, 0, 2)
+        layout.setContentsMargins(0, 4, 0, 4)
 
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         layout.addWidget(label)
 
@@ -213,7 +219,8 @@ class ColorParamWidget(QWidget):
 
         r, g, b = param.value
         self.hex_label = QLabel(f"#{r:02x}{g:02x}{b:02x}")
-        self.hex_label.setStyleSheet("color: #888; font-family: monospace; font-size: 11px;")
+        self.hex_label.setStyleSheet(
+            "color: #606070; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px;")
         layout.addWidget(self.hex_label)
         layout.addStretch()
 
@@ -241,21 +248,23 @@ class PaletteWidget(QWidget):
         self._colors = list(param.value)
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 2, 0, 2)
+        main_layout.setContentsMargins(0, 4, 0, 4)
 
         header = QHBoxLayout()
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         header.addWidget(label)
 
         self.add_btn = QPushButton("+")
         self.add_btn.setFixedSize(28, 28)
+        self.add_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         self.add_btn.clicked.connect(self._add_color)
         header.addWidget(self.add_btn)
 
-        self.remove_btn = QPushButton("-")
+        self.remove_btn = QPushButton("\u2212")
         self.remove_btn.setFixedSize(28, 28)
+        self.remove_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         self.remove_btn.clicked.connect(self._remove_color)
         header.addWidget(self.remove_btn)
         header.addStretch()
@@ -312,21 +321,23 @@ class FloatListWidget(QWidget):
         self._values = list(param.value)
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 2, 0, 2)
+        main_layout.setContentsMargins(0, 4, 0, 4)
 
         header = QHBoxLayout()
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         header.addWidget(label)
 
         add_btn = QPushButton("+")
         add_btn.setFixedSize(28, 28)
+        add_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         add_btn.clicked.connect(self._add_item)
         header.addWidget(add_btn)
 
-        remove_btn = QPushButton("-")
+        remove_btn = QPushButton("\u2212")
         remove_btn.setFixedSize(28, 28)
+        remove_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         remove_btn.clicked.connect(self._remove_item)
         header.addWidget(remove_btn)
         header.addStretch()
@@ -387,21 +398,23 @@ class IntListWidget(QWidget):
         self._values = list(param.value)
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 2, 0, 2)
+        main_layout.setContentsMargins(0, 4, 0, 4)
 
         header = QHBoxLayout()
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         header.addWidget(label)
 
         add_btn = QPushButton("+")
         add_btn.setFixedSize(28, 28)
+        add_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         add_btn.clicked.connect(self._add_item)
         header.addWidget(add_btn)
 
-        remove_btn = QPushButton("-")
+        remove_btn = QPushButton("\u2212")
         remove_btn.setFixedSize(28, 28)
+        remove_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         remove_btn.clicked.connect(self._remove_item)
         header.addWidget(remove_btn)
         header.addStretch()
@@ -461,21 +474,23 @@ class TupleListWidget(QWidget):
         self._tuple_len = len(param.value[0]) if param.value else 2
 
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 2, 0, 2)
+        main_layout.setContentsMargins(0, 4, 0, 4)
 
         header = QHBoxLayout()
         label = QLabel(humanize_name(param.name))
-        label.setFixedWidth(120)
+        label.setFixedWidth(LABEL_WIDTH)
         label.setToolTip(param.tooltip)
         header.addWidget(label)
 
         add_btn = QPushButton("+")
         add_btn.setFixedSize(28, 28)
+        add_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         add_btn.clicked.connect(self._add_row)
         header.addWidget(add_btn)
 
-        remove_btn = QPushButton("-")
+        remove_btn = QPushButton("\u2212")
         remove_btn.setFixedSize(28, 28)
+        remove_btn.setStyleSheet("font-size: 14px; font-weight: bold; padding: 0;")
         remove_btn.clicked.connect(self._remove_row)
         header.addWidget(remove_btn)
         header.addStretch()

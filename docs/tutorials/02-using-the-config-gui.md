@@ -2,11 +2,11 @@
 
 # Using the Config GUI
 
-Open the configuration window, explore the parameter controls, preview changes in real time, and save your tweaks.
+Open the configuration window, explore the effect gallery, tweak parameters with live preview, and save your changes.
 
 ## What you'll accomplish
 
-You will open the configuration GUI, adjust timing and color parameters for an effect, preview the results on the live keyboard visualizer, and save your changes.
+You will open the configuration GUI, browse effects in the gallery sidebar, adjust timing and color parameters, preview the results on the live keyboard visualizer, and save your changes.
 
 ## Prerequisites
 
@@ -20,26 +20,21 @@ You will open the configuration GUI, adjust timing and color parameters for an e
 
 1. Right-click the tray icon and click **Configure...**.
 
-   ![Tray menu highlighting Configure option](../images/screenshots/SS-008.png)
+   The configuration window opens. It has four main areas:
+   - **Effect gallery** on the left sidebar — searchable card list of all effects with category filters
+   - **Header bar** at the top — current effect name, category, description, and Save/Revert/Reset buttons
+   - **Keyboard visualizer** in the center — real-time preview with glow and depth effects
+   - **Parameter panel** at the bottom — collapsible groups of auto-generated controls
 
-   The configuration window opens. It has three areas:
-   - **Effect dropdown** at the top
-   - **Parameter panel** on the left (scrollable)
-   - **Keyboard visualizer** on the right
+2. In the gallery sidebar, click the **Plasma** card. The header bar updates with "Plasma" and its description. The parameter panel populates with controls in collapsible groups (Timing, Colors, etc.), and the visualizer starts showing the Plasma effect.
 
-   ![Config window overview](../images/screenshots/SS-003.png)
+   > Use the search field at the top of the gallery to find effects by name, or click the category buttons (Organic, Atmospheric, Mathematical, Glitch, Kinetic) to filter.
 
-2. Select **Plasma** from the effect dropdown. The parameter panel populates with controls grouped into categories (Timing, Colors, Simulation, Other), and the visualizer starts showing the Plasma effect.
+3. In the parameter panel, find the **Timing** group. Click its header to expand it if collapsed. Find the **FPS** slider and drag it from 20 down to 10. Watch the visualizer — the animation slows down immediately. Drag it up to 30 — the animation becomes smoother.
 
-3. Find the **FPS** slider in the Timing group. Drag it from 20 down to 10. Watch the visualizer — the animation slows down immediately. Drag it up to 30 — the animation becomes smoother.
+   > Changes you make here only affect the preview. Your actual keyboard is still running the saved config. The status bar at the bottom shows the current FPS and an "unsaved" indicator when you have pending changes.
 
-   ![Adjusting the FPS slider](../images/screenshots/SS-009.png)
-
-   > Changes you make here only affect the preview. Your actual keyboard is still running the saved config.
-
-4. Scroll down to the **Colors** group. You should see the **Palette** parameter with a row of color swatches.
-
-   ![Palette editor with color swatches](../images/screenshots/SS-010.png)
+4. Expand the **Colors** group. You should see the **Palette** parameter with a row of color swatches.
 
 5. Click any color swatch in the palette. A color picker dialog opens. Choose a new color and click OK. The visualizer updates immediately with your new palette.
 
@@ -47,18 +42,16 @@ You will open the configuration GUI, adjust timing and color parameters for an e
 
 7. Hover over any parameter label to see a tooltip describing what it controls.
 
-8. When you're happy with your changes, click **Save** in the bottom button bar. This writes your values to `effects/plasma_config.py`. The effect running on your keyboard picks up the new values on its next frame.
+8. When you're happy with your changes, click **Save** in the header bar. This writes your values to `effects/plasma_config.py`. The effect running on your keyboard picks up the new values on its next frame.
 
-   > The window title shows an asterisk (`*`) when you have unsaved changes.
+9. If you want to undo your changes, click **Revert** to reload the config file from disk. Or click **Reset** to restore the original default values.
 
-9. If you want to undo your changes, click **Revert to Saved** to reload the config file from disk. Or click **Reset to Defaults** to restore the values from when the GUI first opened the effect.
-
-10. Switch to a different effect using the dropdown. If you have unsaved changes, the GUI asks whether to discard them.
+10. Click a different effect card in the gallery sidebar. If you have unsaved changes, the GUI asks whether to discard them.
 
 ## If something goes wrong
 
 - **"No configurable parameters" message:** The selected effect doesn't have a `_config.py` file. Not all effects are guaranteed to have one, though all 28 built-in effects do.
-- **Visualizer is black:** The preview may have crashed. Switch to a different effect and back to restart it.
+- **Visualizer is black:** The preview may have crashed. Click a different effect card and then click back to restart it.
 - **Save button doesn't seem to work:** Check the terminal where you launched the tray app — if the config file has a syntax error from a previous manual edit, the effect may be using cached values.
 
 ## What to try next

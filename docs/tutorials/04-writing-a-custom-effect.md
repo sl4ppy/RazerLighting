@@ -150,7 +150,7 @@ You will write a "Rainbow Scroll" effect that sweeps a rainbow gradient across t
 
 ### Step 6: Test in the config GUI
 
-9. Open **Configure...** from the tray menu. Select **Rainbow Scroll** from the dropdown. The GUI auto-detects all five parameters and generates appropriate controls:
+9. Open **Configure...** from the tray menu. Select **Rainbow Scroll** from the effect gallery sidebar. The GUI auto-detects all five parameters and generates appropriate controls:
 
    - **FPS** → slider (1–60)
    - **Speed** → slider (0–0.1)

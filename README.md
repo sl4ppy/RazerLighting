@@ -68,11 +68,12 @@ Open **Configure...** from the tray menu to launch the configuration window:
 
 ![Configuration window](screenshots/wave_interference.gif)
 
-- **Effect selector** — switch between all effects from the dropdown
-- **Auto-generated controls** — sliders, spinboxes, color pickers, palette editors, and checkboxes inferred from each effect's config
-- **Live keyboard preview** — realistic Razer Blade layout renders the effect in real time as you tweak
+- **Effect gallery** — browse all 28 effects in a sidebar with search, category filters (Organic, Atmospheric, Mathematical, Glitch, Kinetic), and descriptions
+- **Auto-generated controls** — sliders, spinboxes, color pickers, palette editors, and checkboxes inferred from each effect's config, in collapsible parameter groups
+- **Live keyboard preview** — enhanced visualizer with per-key glow, 3D depth shading, ambient bloom, and desk reflection
 - **Tooltips** — hover over any parameter for a description
-- **Save / Revert / Defaults** — changes only affect the preview until you Save
+- **Status bar** — live FPS counter, current effect name, matrix dimensions, and unsaved-changes indicator
+- **Save / Revert / Reset** — changes only affect the preview until you Save
 
 ## Adding Effects
 
@@ -93,11 +94,12 @@ See the **[Creating Effects Guide](CREATING_EFFECTS.md)** for the full walkthrou
 
 ```
 razer_lighting.py            System tray app
-config_window.py             PyQt5 configuration GUI with live preview
+config_window.py             PyQt5 configuration GUI with effect gallery and live preview
 config_widgets.py            Parameter editor widgets (sliders, color pickers, etc.)
 config_parser.py             AST-based config file parsing & writing
 keyboard_layout.py           Keyboard layout data and key-rect computation
 virtual_device.py            Virtual device for preview rendering
+about_window.py              About dialog with branded visuals
 device.py                    OpenRazer device connection with retry
 capture_gif.py               Animated GIF capture tool
 effects/

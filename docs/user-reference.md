@@ -185,7 +185,7 @@ Variables starting with `_` are ignored by the parser. Use this for internal con
 
 **File:** `config_window.py`
 
-A PyQt5 window for visually editing effect parameters with real-time preview.
+A PyQt5 window for visually editing effect parameters with real-time preview. Features an effect gallery sidebar, enhanced keyboard visualizer with glow effects, and a status bar.
 
 ### Launch
 
@@ -201,10 +201,25 @@ The optional `effect_name` argument pre-selects an effect (e.g., `Plasma`).
 
 | Area | Description |
 |---|---|
-| **Effect dropdown** (top) | Select which effect to configure. Switching effects prompts to save unsaved changes. |
-| **Parameter panel** (left, scrollable) | Auto-generated widgets grouped by category. |
-| **Keyboard visualizer** (right) | Live effect preview on a realistic keyboard layout. |
-| **Button bar** (bottom) | Save, Revert to Saved, Reset to Defaults. |
+| **Effect gallery** (left sidebar) | Scrollable card list of all effects with search field, category filters (Organic, Atmospheric, Mathematical, Glitch, Kinetic), and one-line descriptions. Click a card to switch effects. |
+| **Header bar** (top right) | Shows current effect name, category, and description. Contains Save, Revert, and Reset buttons. |
+| **Keyboard visualizer** (center) | Live effect preview with per-key glow, 3D depth shading, and ambient bloom. |
+| **Parameter panel** (bottom right, scrollable) | Auto-generated widgets in collapsible groups. Click a group header to expand or collapse it. |
+| **Status bar** (bottom) | Current effect name, live FPS counter, matrix dimensions, and unsaved-changes indicator. |
+
+### Effect Gallery
+
+The sidebar displays all 28 effects as cards grouped into five categories:
+
+| Category | Effects |
+|---|---|
+| **Organic** | Fireflies, Physarum, Crystal Growth, Reaction-Diffusion, Boid Flock, Heartbeat Pulse |
+| **Atmospheric** | Aurora Borealis, Nebula Clouds, Tidal Swell, Raindrop Ripples, Ember Drift, Searchlight |
+| **Mathematical** | Plasma, Lissajous, Chladni Patterns, Fractal Zoom, Wave Interference, Metaballs, Heat Diffusion |
+| **Glitch** | Glitch, Corrupt, Corruption |
+| **Kinetic** | Arc Sweep, Lightning Strike, Binary Cascade, Magnetic Field Lines, Voronoi Shatter, Cyclic Cellular Automaton |
+
+Use the search field to filter by name or description. Click category buttons to show only effects in that category. Switching effects with unsaved changes prompts to save or discard.
 
 ### Parameter Widgets
 
@@ -217,6 +232,8 @@ The optional `effect_name` argument pre-selects an effect (e.g., `Plasma`).
 | Spinbox row | `float_list`, `int_list` | Row of value spinboxes; + adds an entry, - removes the last |
 | Editable table | `tuple_list` | Spreadsheet-style table of values |
 
+Parameters are displayed in collapsible groups (Timing, Colors, Simulation, Other). Click the group header to collapse or expand it.
+
 ### Live Preview
 
 The visualizer runs the effect on a [virtual device](glossary.md#virtual-device) in a background thread. Parameter changes are debounced (100ms) and written to a temporary config file in `/tmp/razer-lighting-preview/`. The preview thread reads from this temp file, not the real config.
@@ -226,8 +243,11 @@ Changes in the preview do not affect the running effect on your keyboard until y
 ### Keyboard Visualizer
 
 The visualizer renders the Razer Blade 14 keyboard layout with:
-- Physically accurate key positions, sizes, and gaps
 - Per-key colors from the preview effect
+- **Ambient glow** — radial gradient bloom around bright keys, proportional to brightness
+- **3D depth** — top-lit gradient on each key face with drop shadows and specular highlights
+- **Desk reflection** — bottom-row keys cast faint color onto the surface below
+- **Vignette** — darkened edges for atmosphere
 - Optional key labels (toggle via button below the visualizer)
 - Adaptive scaling to fill the available space
 
