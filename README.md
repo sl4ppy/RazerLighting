@@ -25,19 +25,76 @@ Per-key RGB control for Razer laptop keyboards on Linux — 28 procedural effect
 - **Auto-discovery** — drop a new `.py` file in `effects/` and it appears in the menu automatically
 - **GIF capture** — record any effect as an animated GIF for sharing or documentation
 
-## Quick Start
+## Requirements
+
+- Linux with a working **[OpenRazer](https://openrazer.github.io/)** install (daemon + DKMS kernel modules)
+- A Razer keyboard with per-key RGB (Razer Blade laptops, BlackWidow, Huntsman, Cynosa Chroma, etc.)
+- Python **3.10+** with `python3-venv`
+- Your user account in the `plugdev` group
+
+## 1. Install OpenRazer
+
+Pick the path for your distro. After install, **log out and back in** so the `plugdev` group membership and udev rules take effect.
+
+**Ubuntu / Debian / Pop!_OS:**
+```bash
+sudo add-apt-repository ppa:openrazer/stable    # Ubuntu only
+sudo apt update
+sudo apt install openrazer-meta python3-openrazer python3-venv
+sudo gpasswd -a $USER plugdev
+```
+
+**Fedora:**
+```bash
+sudo dnf copr enable openrazer/openrazer
+sudo dnf install openrazer-meta python3-openrazer
+sudo gpasswd -a $USER plugdev
+```
+
+**Arch:**
+```bash
+sudo pacman -S openrazer-daemon openrazer-driver-dkms python-openrazer
+sudo gpasswd -a $USER plugdev
+```
+
+### Verify OpenRazer sees your keyboard
+
+```bash
+systemctl --user status openrazer-daemon       # should be "active (running)"
+lsmod | grep razer                             # should list razerkbd
+python3 -c "import openrazer.client as o; print([d.name for d in o.DeviceManager().devices])"
+```
+
+The last command should print your keyboard's name (e.g. `['Razer Blade 14 (2021)']`). If it prints `[]`, see [Troubleshooting](docs/troubleshooting.md).
+
+## 2. Install Razer Lighting
 
 ```bash
 git clone https://github.com/sl4ppy/RazerLighting.git
 cd RazerLighting
-python3 -m venv --system-site-packages .venv
-.venv/bin/pip install pystray Pillow PyQt5 numpy
+python3 -m venv --system-site-packages .venv     # --system-site-packages exposes python3-openrazer
+.venv/bin/pip install -r requirements.txt
+```
+
+The `--system-site-packages` flag is **required** so the venv can import the `openrazer` Python package installed by your distro.
+
+## 3. Run
+
+```bash
 .venv/bin/python3 razer_lighting.py
 ```
 
-A green circle appears in your system tray. Right-click it to select an effect. Your keyboard lights up immediately.
+A green circle appears in your system tray. **Right-click it** to:
+- Pick from 28 effects
+- Open **Configure...** for the live-tuning GUI
+- Toggle **Start at login** to autostart on next boot
+- **Randomize** to pick a random effect each launch
 
-> **Requires:** Linux with [OpenRazer](https://openrazer.github.io/) installed, a Razer keyboard with per-key RGB support, and Python 3.10+.
+Your keyboard lights up immediately. The last selected effect is remembered between runs.
+
+### Run as a background service (optional)
+
+To keep it running without a terminal, drop a `.desktop` file in `~/.config/autostart/` — or just enable **Start at login** from the tray menu, which does this for you.
 
 ## Hardware Compatibility
 
